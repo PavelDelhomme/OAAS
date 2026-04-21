@@ -1,0 +1,45 @@
+# Copie vers ~/.config/oaas/config.yaml (ou : oaas init-config / make init-config)
+#
+# Qu’est-ce qu’un fichier .gguf ?
+#   C’est une archive de poids du modèle de langage, au format GGUF utilisé par llama.cpp.
+#   Tu en télécharges un par modèle (souvent depuis Hugging Face ou la page du modèle),
+#   comme un « paquet » à placer sur le disque — pas une clé API, pas un compte cloud.
+#   Les noms contiennent souvent la quantification (Q4_K_M, Q8_0…) : plus c’est élevé,
+#   plus la qualité est meilleure mais le fichier est gros et plus lent en CPU.
+#
+# OAAS ne dépend pas d’Ollama : Continue / les clients pointent uniquement vers ce serveur.
+
+server:
+  bind: "127.0.0.1:11435"
+
+runtime:
+  llama_server_binary: null
+
+# Compression automatique des prompts (LLMLingua) avant llama-server.
+# Prérequis : venv Python + pip install -r scripts/requirements-llmlingua.txt
+# puis adapte « command » (chemin absolu vers le worker et l’interpréteur du venv).
+prompt_compression:
+  enabled: true
+  command:
+    - python3
+    - "-u"
+    # Exemple avec venv dans le dépôt (recommandé) :
+    # - "/chemin/absolu/vers/OAAS/.venv-llmlingua/bin/python"
+    # - "-u"
+    # - "/chemin/absolu/vers/OAAS/scripts/oaas_llmlingua_worker.py"
+    - "scripts/oaas_llmlingua_worker.py"
+  timeout_secs: 300
+  strict: true
+  rate: 0.5
+  target_token: 0
+  model_name: "microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank"
+  use_llmlingua2: true
+  device_map: "cpu"
+
+profiles:
+  default:
+    model: "/chemin/vers/modele.gguf"
+    internal_port: 18081
+    ctx_size: 8192
+    n_gpu_layers: -1
+    extra_args: []

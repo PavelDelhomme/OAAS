@@ -1,0 +1,6 @@
+# Installe dans un venv dédié (recommandé) :
+#   python3 -m venv .venv-llmlingua && . .venv-llmlingua/bin/activate
+#   pip install -r scripts/requirements-llmlingua.txt
+#
+# PyTorch : choisis la roue CPU ou CUDA selon ta machine sur https://pytorch.org
+llmlingua>=0.2.2
