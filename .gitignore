@@ -1,0 +1,9 @@
+/target
+.venv-llmlingua/
+__pycache__/
+*.py[cod]
+**/*.rs.bk
+.env
+.venv
+*.gguf
+*.gguf.part
