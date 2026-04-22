@@ -1,31 +1,47 @@
+mod app_state;
 mod backend;
+mod cmd_docs;
+mod cmd_models;
 mod config;
+mod docs_catalog;
 mod doctor;
+mod download;
 mod error;
 mod http_root;
+mod http_ide;
+mod continue_ide;
 mod init_config;
 mod llmlingua;
+mod models_catalog;
 mod proxy;
 mod runtime;
+mod serve_dashboard;
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
 use axum::body::Body;
-use axum::extract::{DefaultBodyLimit, State};
+use axum::extract::State;
 use axum::http::Request;
 use axum::response::Response;
-use axum::routing::{any, get};
+use axum::routing::{any, get, post};
 use axum::Router;
 use clap::{Parser, Subcommand};
 use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
 use url::Url;
 
+use crate::app_state::AppState;
 use crate::backend::{wait_upstream_ready, LlamaBackend};
+use crate::cmd_docs::DocsCommand;
+use crate::cmd_models::ModelsCommand;
 use crate::config::{default_config_path, load_config};
 use crate::error::OaasError;
-use crate::http_root::root as root_json;
+use crate::http_ide::{get_continue_status, post_apply_continue, post_open_folder};
+use crate::http_root::{oaas_catalog, oaas_status, oaas_ui, root};
+use crate::serve_dashboard::build_oaas_status;
+use crate::models_catalog::load_models_catalog;
 use crate::proxy::{build_client, forward_request, ProxyState};
 use crate::runtime::resolve_llama_binary;
 
@@ -42,68 +58,70 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Vérifie llama-server, le YAML et la présence du fichier .gguf.
     Doctor {
         #[arg(long, value_name = "FILE")]
         config: Option<PathBuf>,
         #[arg(long, default_value = "default", env = "OAAS_PROFILE")]
         profile: String,
     },
-    /// Écrit la configuration d’exemple (intégrée) vers ~/.config/oaas/config.yaml.
     InitConfig {
-        #[arg(long, help = "Écrase le fichier s’il existe déjà")]
+        #[arg(long)]
         force: bool,
-        #[arg(
-            long,
-            value_name = "FILE",
-            help = "Chemin du fichier à créer (défaut: XDG)"
-        )]
+        #[arg(long, value_name = "FILE")]
         output: Option<PathBuf>,
     },
-    /// Lance le démon HTTP et un processus llama-server pour le profil choisi.
+    /// Catalogue et téléchargement de modèles GGUF (Hugging Face).
+    Models {
+        #[command(subcommand)]
+        command: ModelsCommand,
+    },
+    /// Mise en cache de paquets de documentation (git / fetch).
+    Docs {
+        #[command(subcommand)]
+        command: DocsCommand,
+    },
     Serve {
-        /// Fichier YAML (défaut: $XDG_CONFIG_HOME/oaas/config.yaml)
         #[arg(long, value_name = "FILE")]
         config: Option<PathBuf>,
-        /// Nom du profil dans le fichier de configuration.
         #[arg(long, default_value = "default", env = "OAAS_PROFILE")]
         profile: String,
     },
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .init();
 
     let cli = Cli::parse();
+    if let Err(e) = run_cli(cli).await {
+        tracing::error!(error = %e, "arrêt sur erreur");
+        std::process::exit(1);
+    }
+}
+
+async fn run_cli(cli: Cli) -> Result<(), OaasError> {
     match cli.command {
         Commands::Doctor { config, profile } => {
             crate::doctor::run_doctor(config, profile);
+            Ok(())
         }
         Commands::InitConfig { force, output } => {
-            if let Err(e) = crate::init_config::run_init_config(force, output) {
-                eprintln!("init-config: {e}");
-                std::process::exit(1);
-            }
+            crate::init_config::run_init_config(force, output).map_err(OaasError::Config)?;
+            Ok(())
         }
-        Commands::Serve { config, profile } => {
-            if let Err(e) = run_serve(config, profile).await {
-                tracing::error!(error = %e, "arrêt sur erreur");
-                std::process::exit(1);
-            }
-        }
+        Commands::Models { command } => crate::cmd_models::run_models(command).await,
+        Commands::Docs { command } => crate::cmd_docs::run_docs(command).await,
+        Commands::Serve { config, profile } => run_serve(config, profile).await,
     }
-
-    Ok(())
 }
 
 async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result<(), OaasError> {
     let path = config_path.unwrap_or_else(default_config_path);
     if !path.exists() {
         return Err(OaasError::Config(format!(
-            "fichier de configuration absent: {} — copie config.example.yaml vers ce chemin.",
+            "fichier de configuration absent: {} — copie config.example.yaml ou oaas init-config.",
             path.display()
         )));
     }
@@ -148,18 +166,41 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
     };
 
     let client = build_client()?;
-    let state = ProxyState {
+    let proxy = ProxyState {
         client,
         upstream: upstream_url,
         llmlingua,
         prompt_compression,
     };
 
+    let catalog_root = load_models_catalog()?;
+    let status = Arc::new(build_oaas_status(
+        &cfg,
+        &path,
+        &profile_name,
+        &catalog_root,
+    ));
+    let catalog = Arc::new(catalog_root);
+    let app_state = AppState {
+        proxy,
+        catalog: catalog.clone(),
+        status,
+    };
+
     let app = Router::new()
-        .route("/", get(root_json))
+        .route("/", get(root))
+        .route("/oaas/", get(oaas_ui))
+        .route("/oaas/catalog.json", get(oaas_catalog))
+        .route("/oaas/status.json", get(oaas_status))
+        .route(
+            "/oaas/ide/continue-status",
+            get(get_continue_status),
+        )
+        .route("/oaas/ide/apply-continue", post(post_apply_continue))
+        .route("/oaas/ide/open-folder", post(post_open_folder))
         .fallback(any(proxy_handler))
-        .layer(DefaultBodyLimit::max(64 * 1024 * 1024))
-        .with_state(state);
+        .layer(axum::extract::DefaultBodyLimit::max(64 * 1024 * 1024))
+        .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind(&cfg.server.bind)
         .await
@@ -169,7 +210,9 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
         listen = %cfg.server.bind,
         upstream = %upstream_base,
         profile = %profile_name,
-        "OAAS prêt — configure Continue sur cette URL (OpenAI-compatible)"
+        models_ui = %format!("http://{}/oaas/", cfg.server.bind),
+        status_json = %format!("http://{}/oaas/status.json", cfg.server.bind),
+        "OAAS prêt — /v1 ; UI /oaas/ ; statut /oaas/status.json ; IDE /oaas/ide/*"
     );
 
     let server = axum::serve(listener, app).with_graceful_shutdown(shutdown_signal());
@@ -181,8 +224,8 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
     Ok(())
 }
 
-async fn proxy_handler(State(state): State<ProxyState>, req: Request<Body>) -> Response {
-    forward_request(&state, req).await
+async fn proxy_handler(State(state): State<AppState>, req: Request<Body>) -> Response {
+    forward_request(&state.proxy, req).await
 }
 
 async fn shutdown_signal() {

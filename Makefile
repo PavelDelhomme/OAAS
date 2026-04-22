@@ -28,8 +28,8 @@ help:
 	@echo "Cibles principales :"
 	@echo "  make / make build     — compilation debug"
 	@echo "  make release          — binaire optimisé dans target/release/oaas"
-	@echo "  make run              — cargo run -- serve (dev)"
-	@echo "  make serve            — idem make run"
+	@echo "  make run              — cargo run -- serve (dev, sans bannière URL)"
+	@echo "  make serve            — même chose + rappel des URLs /oaas/ avant le démarrage"
 	@echo "  make doctor           — vérifie llama-server, config, modèle GGUF"
 	@echo "  make init-config      — crée ~/.config/oaas/config.yaml depuis l’exemple"
 	@echo "  make config           — alias de init-config"
@@ -52,7 +52,13 @@ build:
 release:
 	$(CARGO) build --release
 
-run serve:
+run:
+	$(CARGO) run -- serve
+
+serve:
+	@echo "Démarrage OAAS (Ctrl+C pour arrêter)."
+	@echo "  UI tableau de bord : http://127.0.0.1:11435/oaas/  (adapte le port à server.bind dans ~/.config/oaas/config.yaml)"
+	@echo "  JSON statut profils  : même origine → /oaas/status.json"
 	$(CARGO) run -- serve
 
 doctor:
@@ -82,11 +88,14 @@ clean:
 	$(CARGO) clean
 
 install: release
-	install -d "$(BINDIR)" "$(DATADIR)" "$(DATADIR)/scripts"
+	install -d "$(BINDIR)" "$(DATADIR)" "$(DATADIR)/scripts" "$(DATADIR)/data" "$(DATADIR)/static"
 	install -m755 target/release/oaas "$(BINDIR)/oaas"
 	install -m644 config.example.yaml "$(DATADIR)/config.example.yaml"
 	install -m755 scripts/oaas_llmlingua_worker.py "$(DATADIR)/scripts/oaas_llmlingua_worker.py"
 	install -m644 scripts/requirements-llmlingua.txt "$(DATADIR)/scripts/requirements-llmlingua.txt"
+	install -m644 data/models_catalog.yaml "$(DATADIR)/data/models_catalog.yaml"
+	install -m644 data/docs_catalog.yaml "$(DATADIR)/data/docs_catalog.yaml"
+	install -m644 static/oaas_ui.html "$(DATADIR)/static/oaas_ui.html"
 	@echo "Installé : $(BINDIR)/oaas"
 	@echo "Exemple YAML : $(DATADIR)/config.example.yaml"
 	@echo "Si besoin : sudo make install PREFIX=$(PREFIX)"
@@ -98,6 +107,10 @@ install-user: release
 	install -m644 config.example.yaml "$$h/.local/share/oaas/config.example.yaml"; \
 	install -m755 scripts/oaas_llmlingua_worker.py "$$h/.local/share/oaas/scripts/oaas_llmlingua_worker.py"; \
 	install -m644 scripts/requirements-llmlingua.txt "$$h/.local/share/oaas/scripts/requirements-llmlingua.txt"; \
+	mkdir -p "$$h/.local/share/oaas/data" "$$h/.local/share/oaas/static"; \
+	install -m644 data/models_catalog.yaml "$$h/.local/share/oaas/data/models_catalog.yaml"; \
+	install -m644 data/docs_catalog.yaml "$$h/.local/share/oaas/data/docs_catalog.yaml"; \
+	install -m644 static/oaas_ui.html "$$h/.local/share/oaas/static/oaas_ui.html"; \
 	echo "Installé : $$h/.local/bin/oaas"; \
 	echo "Ajoute $$h/.local/bin au PATH si ce n’est pas déjà fait."
 
@@ -105,7 +118,9 @@ uninstall:
 	rm -f "$(BINDIR)/oaas"
 	rm -f "$(DATADIR)/config.example.yaml"
 	rm -f "$(DATADIR)/scripts/oaas_llmlingua_worker.py" "$(DATADIR)/scripts/requirements-llmlingua.txt"
-	-rmdir "$(DATADIR)/scripts" 2>/dev/null || true
+	rm -f "$(DATADIR)/data/models_catalog.yaml" "$(DATADIR)/data/docs_catalog.yaml"
+	rm -f "$(DATADIR)/static/oaas_ui.html"
+	-rmdir "$(DATADIR)/scripts" "$(DATADIR)/data" "$(DATADIR)/static" 2>/dev/null || true
 	-rmdir "$(DATADIR)" 2>/dev/null || true
 	@echo "Désinstallé (PREFIX=$(PREFIX) DESTDIR=$(DESTDIR))."
 
@@ -115,5 +130,9 @@ dist: release
 	@install -m644 config.example.yaml "target/$(DISTNAME)/config.example.yaml"
 	@install -m755 scripts/oaas_llmlingua_worker.py "target/$(DISTNAME)/scripts/oaas_llmlingua_worker.py"
 	@install -m644 scripts/requirements-llmlingua.txt "target/$(DISTNAME)/scripts/requirements-llmlingua.txt"
+	@mkdir -p "target/$(DISTNAME)/data" "target/$(DISTNAME)/static"
+	@install -m644 data/models_catalog.yaml "target/$(DISTNAME)/data/models_catalog.yaml"
+	@install -m644 data/docs_catalog.yaml "target/$(DISTNAME)/data/docs_catalog.yaml"
+	@install -m644 static/oaas_ui.html "target/$(DISTNAME)/static/oaas_ui.html"
 	@tar -C target -czf "target/$(DISTNAME).tar.gz" "$(DISTNAME)"
 	@echo "Archive : target/$(DISTNAME).tar.gz"

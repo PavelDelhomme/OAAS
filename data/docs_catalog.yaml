@@ -1,0 +1,36 @@
+# Paquets de documentation — cache OAAS sous $XDG_DATA_HOME/oaas/docs/<id>/
+#
+# Pour une expérience proche de « tout DevDocs » (recherche globale, jeux de docs
+# officiels normalisés, mode offline dans le navigateur), le projet de référence est :
+#   https://github.com/freeCodeCamp/devdocs
+# L’entrée « devdocs-stack » ci-dessous documente / lance cette stack ; les autres
+# entrées restent des compléments légers (git / fetch) pour des sources ponctuelles.
+
+version: 1
+packs:
+  - id: devdocs-stack
+    title: "DevDocs — agrégateur de documentations (comme devdocs.io)"
+    method: devdocs
+    url: ""
+    note_fr: "Aligné sur le projet freeCodeCamp/devdocs : UI unique, recherche, offline. Utilise « oaas docs devdocs » ou « oaas docs pull devdocs-stack »."
+    docker_image: ghcr.io/freecodecamp/devdocs:latest
+    docker_port: 9292
+
+  - id: rust-book
+    title: "The Rust Programming Language (book)"
+    method: git
+    url: https://github.com/rust-lang/book.git
+    branch: main
+    note_fr: "Livre officiel Rust — git shallow clone (complément à DevDocs)."
+
+  - id: go-ref-spec
+    title: "Go — spécification du langage (page)"
+    method: fetch
+    url: https://go.dev/ref/spec
+    note_fr: "HTML de la spec Go ; utile avec une version Go locale (go doc en complément)."
+
+  - id: git-reference
+    title: "Git Reference (site)"
+    method: fetch
+    url: https://git-scm.com/docs
+    note_fr: "Index doc Git officiel ; pour une version précise : « git help <cmd> » en local."

@@ -1,0 +1,61 @@
+# Catalogue OAAS — modèles GGUF courants (Hugging Face / bartowski).
+# Instruct vs Coder (résumé) :
+#   - Instruct : modèle « généraliste » dialogué (spec, doc, explications, refactor léger).
+#   - Coder : entraîné / calibré pour le code (génération, patches, navigation de codebase).
+# Pour un projet complet (dev + doc + diagnostic), on recommande souvent un Coder pour le code
+# et un Instruct plus petit pour la doc longue — ou un seul Qwen3.5 4B Instruct si la machine est modeste.
+
+version: 1
+defaults:
+  # Profil d’usage par défaut pour « oaas models recommend »
+  balanced_usage: dev
+models:
+  - id: qwen3.5-4b-q4km
+    label: "Qwen3.5 4B — Q4_K_M (recommandé machine modeste)"
+    family: qwen3.5
+    kind: instruct
+    hf_repo: bartowski/Qwen_Qwen3.5-4B-GGUF
+    filename: Qwen3.5-4B-Q4_K_M.gguf
+    approx_size_mb: 2940
+    usage: [general, dev, docs, diagnostic]
+    note_fr: "Meilleur compromis taille / polyvalence Qwen3.5. Idéal pour démarrer sur laptop. Pas spécialisé « code only » mais très bon en assistant projet."
+
+  - id: qwen3.5-4b-q5km
+    label: "Qwen3.5 4B — Q5_K_M (meilleure qualité, plus lourd)"
+    family: qwen3.5
+    kind: instruct
+    hf_repo: bartowski/Qwen_Qwen3.5-4B-GGUF
+    filename: Qwen3.5-4B-Q5_K_M.gguf
+    approx_size_mb: 3400
+    usage: [general, dev, docs]
+    note_fr: "Si tu as un peu plus de VRAM/RAM : meilleure fidélité que Q4_K_M."
+
+  - id: qwen2.5-coder-7b-q4km
+    label: "Qwen2.5 Coder 7B — Q4_K_M (spécialisé code)"
+    family: qwen2.5
+    kind: coder
+    hf_repo: bartowski/Qwen2.5-Coder-7B-Instruct-GGUF
+    filename: Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf
+    approx_size_mb: 4700
+    usage: [dev, diagnostic]
+    note_fr: "Choix solide pour implémentation, revue de patches, outillage. Moins orienté « prose doc longue » qu’un Instruct généraliste."
+
+  - id: qwen2.5-7b-instruct-q4km
+    label: "Qwen2.5 7B Instruct — Q4_K_M (doc & spec)"
+    family: qwen2.5
+    kind: instruct
+    hf_repo: bartowski/Qwen2.5-7B-Instruct-GGUF
+    filename: Qwen2.5-7B-Instruct-Q4_K_M.gguf
+    approx_size_mb: 4700
+    usage: [docs, general, diagnostic]
+    note_fr: "Très bon pour rédaction technique, synthèses, checklists — complète bien un Coder 7B."
+
+  - id: qwen3.5-35b-a3b-q4km
+    label: "Qwen3.5 35B-A3B — Q4_K_M (machine puissante)"
+    family: qwen3.5
+    kind: instruct
+    hf_repo: bartowski/Qwen_Qwen3.5-35B-A3B-GGUF
+    filename: Qwen_Qwen3.5-35B-A3B-Q4_K_M.gguf
+    approx_size_mb: 21900
+    usage: [general, dev, docs, diagnostic]
+    note_fr: "MoE A3B : gros contexte et qualité, mais ~21 Go pour cette quant — réservé aux postes avec assez de VRAM/RAM."

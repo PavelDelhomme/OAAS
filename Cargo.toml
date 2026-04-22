@@ -1,6 +1,6 @@
 [package]
 name = "oaas"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Orchestrateur local de modèles LLM (Linux) — API compatible OpenAI pour Continue et autres clients"
 license = "MIT OR Apache-2.0"

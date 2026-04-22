@@ -99,4 +99,8 @@ pub fn run_doctor(config_path: Option<PathBuf>, profile: String) {
     println!(
         "\nContinue : base URL http://<bind>/v1  (ex. http://127.0.0.1:11435/v1 selon server.bind)."
     );
+    println!(
+        "\nModèles GGUF : oaas models recommend | oaas models list | oaas models pull <id> --patch-config"
+    );
+    println!("Documentation : oaas docs list | oaas docs pull <id>");
 }

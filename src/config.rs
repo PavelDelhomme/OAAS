@@ -114,3 +114,48 @@ pub fn load_config(path: &Path) -> Result<ConfigFile, OaasError> {
     serde_yaml::from_str(&raw)
         .map_err(|e| OaasError::Config(format!("YAML invalide dans {}: {e}", path.display())))
 }
+
+/// Met à jour `profiles.<profil>.model` dans un YAML (réécriture complète du fichier).
+pub fn patch_profile_model_path(
+    config_path: &Path,
+    profile: &str,
+    model_path: &Path,
+) -> Result<(), OaasError> {
+    let raw = std::fs::read_to_string(config_path).map_err(|e| {
+        OaasError::Config(format!("impossible de lire {}: {e}", config_path.display()))
+    })?;
+    let mut v: serde_yaml::Value = serde_yaml::from_str(&raw).map_err(|e| {
+        OaasError::Config(format!("YAML invalide dans {}: {e}", config_path.display()))
+    })?;
+    let profiles = v
+        .get_mut("profiles")
+        .and_then(|x| x.as_mapping_mut())
+        .ok_or_else(|| {
+            OaasError::Config(format!(
+                "clef « profiles » manquante ou invalide dans {}",
+                config_path.display()
+            ))
+        })?;
+    let key = serde_yaml::Value::String(profile.to_string());
+    if !profiles.contains_key(&key) {
+        return Err(OaasError::Config(format!(
+            "profil « {profile} » absent de {}",
+            config_path.display()
+        )));
+    }
+    let prof = profiles.get_mut(&key).ok_or_else(|| {
+        OaasError::Config(format!("profil « {profile} » introuvable après contrôle"))
+    })?;
+    let pmap = prof.as_mapping_mut().ok_or_else(|| {
+        OaasError::Config(format!("profil « {profile} » : attendu un mapping YAML"))
+    })?;
+    pmap.insert(
+        serde_yaml::Value::String("model".to_string()),
+        serde_yaml::Value::String(model_path.to_string_lossy().into_owned()),
+    );
+    let out = serde_yaml::to_string(&v)
+        .map_err(|e| OaasError::Config(format!("sérialisation YAML: {e}")))?;
+    std::fs::write(config_path, out)
+        .map_err(|e| OaasError::Config(format!("écriture {}: {e}", config_path.display())))?;
+    Ok(())
+}

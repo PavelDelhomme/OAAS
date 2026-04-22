@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OAAS — tableau de bord</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #0f1114;
+      color: #e6e9ef;
+      line-height: 1.45;
+    }
+    a { color: #6cb6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, .mono { font-family: ui-monospace, monospace; font-size: 0.88em; }
+    code {
+      background: #1a1e24;
+      padding: 0.12em 0.35em;
+      border-radius: 4px;
+      border: 1px solid #2a3140;
+    }
+    h1 { font-size: 1.35rem; font-weight: 650; margin: 0 0 0.35rem; }
+    h2 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; color: #b8c0d0; font-weight: 600; }
+    .wrap { max-width: 58rem; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; }
+    .muted { color: #8b95a8; font-size: 0.9rem; }
+    .card {
+      background: #161a21;
+      border: 1px solid #2a3140;
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      margin: 0.65rem 0;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+    .grow { flex: 1; min-width: 12rem; }
+    button {
+      background: #2d6cdf;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    button.secondary { background: #3a4252; color: #e6e9ef; }
+    button:hover { filter: brightness(1.08); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { text-align: left; padding: 0.45rem 0.35rem; border-bottom: 1px solid #2a3140; vertical-align: top; }
+    th { color: #8b95a8; font-weight: 600; }
+    tr.active td { background: rgba(45, 108, 223, 0.12); }
+    .pill {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: #252b36;
+      font-size: 0.8rem;
+      margin: 0.15rem 0.2rem 0 0;
+      cursor: pointer;
+      border: 1px solid #3a4252;
+    }
+    .pill.on { background: #2d4a7a; border-color: #4a7fd4; }
+    .grid { display: grid; gap: 0.65rem; }
+    @media (min-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    .err { color: #f88; }
+    label { font-size: 0.85rem; color: #8b95a8; display: block; margin-bottom: 0.25rem; }
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0f1114;
+      border: 1px solid #2a3140;
+      border-radius: 6px;
+      color: #e6e9ef;
+      padding: 0.45rem 0.55rem;
+      font-family: inherit;
+    }
+    small.hint { display: block; margin-top: 0.35rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>OAAS — tableau de bord</h1>
+    <p class="muted">Servi par <code>make serve</code> / <code>oaas serve</code>. Le terminal reste la référence pour <code>pull</code> et <code>doctor</code>.</p>
+    <div id="err" class="err" style="display:none"></div>
+
+    <div class="grid grid-2" style="margin-top:1rem">
+      <div class="card" id="panel-status">
+        <p>Chargement <code>/oaas/status.json</code>…</p>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">Projet (Continue / IDE)</h2>
+        <p class="muted">Le dossier de travail se choisit dans l’IDE (VS Code, Cursor…). OAAS ne remplace pas l’IDE : enregistre ici un repère persistant (navigateur seulement).</p>
+        <label for="proj">Chemin ou nom du projet courant</label>
+        <input type="text" id="proj" placeholder="ex. ~/Documents/Dev/mon-repo" autocomplete="off" />
+        <small class="hint muted">Stocké dans le navigateur (localStorage). Utilisé par les boutons « ouvrir dans … » ci-dessous (le serveur vérifie que le chemin est sous <code>$HOME</code>).</small>
+      </div>
+    </div>
+
+    <h2>API Continue (OpenAI-compatible)</h2>
+    <div class="card" id="panel-api">
+        <p class="muted">Définis dans Continue : base URL = valeur ci-dessous + clé factice en local.</p>
+    </div>
+
+    <h2>Continue + éditeur (Code OSS, Cursor, VSCodium)</h2>
+    <p class="muted">OAAS peut <strong>écrire</strong> le bloc modèle dans <code>~/.continue/config.yaml</code> (format <a href="https://docs.continue.dev/reference" target="_blank" rel="noopener">Continue YAML</a>) et <strong>lancer</strong> ton éditeur sur le dossier projet (chemin ci-dessus, sous <code>$HOME</code> uniquement). Ce n’est pas un clone de Cursor : c’est le pont pratique vers l’extension Continue déjà installée.</p>
+    <div class="card" id="panel-ide">
+      <p class="muted">Chargement <code>/oaas/ide/continue-status</code>…</p>
+    </div>
+    <p id="ide-msg" class="muted" style="min-height:1.25rem"></p>
+
+    <h2>Recommandations (comme <code>oaas models recommend</code>)</h2>
+    <div class="card" id="panel-rec"></div>
+
+    <h2>Catalogue GGUF</h2>
+    <p class="muted">Filtre par usage puis copie la commande <code>oaas models pull …</code>.</p>
+    <div id="pills"></div>
+    <div id="catalog"></div>
+
+    <h2>Feuille de route</h2>
+    <div class="card muted" id="panel-rag"></div>
+  </div>
+
+  <script>
+    const LS_KEY = 'oaas_ui_project_path';
+
+    function copyText(t, btn) {
+      navigator.clipboard.writeText(t).then(() => {
+        const o = btn.textContent;
+        btn.textContent = 'Copié';
+        setTimeout(() => { btn.textContent = o; }, 1400);
+      }).catch(() => alert('Copie impossible : ' + t));
+    }
+
+    function renderStatus(s) {
+      document.getElementById('panel-status').innerHTML = `
+        <div class="row">
+          <div class="grow">
+            <div><strong>Version</strong> ${s.version}</div>
+            <div class="muted mono" style="margin-top:0.35rem">Config : ${s.config_path}</div>
+            <div class="muted" style="margin-top:0.35rem">Écoute : <code>${s.server_bind}</code> · clients : <code>${s.client_host}</code></div>
+            <div style="margin-top:0.5rem">Profil actif : <strong>${s.active_profile}</strong></div>
+          </div>
+        </div>
+        <h2 style="margin-top:1rem">Profils YAML</h2>
+        <table>
+          <thead><tr><th>Nom</th><th>Modèle (.gguf)</th><th>Port llama</th></tr></thead>
+          <tbody>
+            ${s.profiles.map(p => `<tr class="${p.active ? 'active' : ''}">
+              <td>${p.active ? '● ' : ''}${p.name}</td>
+              <td class="mono" style="word-break:break-all">${p.model}</td>
+              <td>${p.internal_port}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <p class="muted" style="margin-top:0.75rem">Autre profil au démarrage : <code>OAAS_PROFILE=nom oaas serve</code></p>
+      `;
+      const api = s.api_base_url;
+      document.getElementById('panel-api').innerHTML = `
+        <div class="row">
+          <code class="grow mono" id="api-url">${api}</code>
+          <button type="button" id="btn-copy-api">Copier l’URL</button>
+          <a href="${api}/models" target="_blank" rel="noopener"><button type="button" class="secondary">GET /v1/models</button></a>
+        </div>
+      `;
+      document.getElementById('btn-copy-api').onclick = function() {
+        copyText(api, this);
+      };
+
+      document.getElementById('panel-rec').innerHTML = `
+        <ul style="margin:0;padding-left:1.1rem">
+          ${s.recommend_picks.map(p => `<li><strong>${p.description_fr}</strong> — <code>${p.model_id}</code><br/><span class="muted">${p.label}</span><br/>
+            <code>oaas models pull ${p.model_id} --patch-config</code></li>`).join('')}
+        </ul>
+        <h2 style="margin-top:1rem">Raccourcis CLI</h2>
+        <ul style="margin:0;padding-left:1.1rem" class="mono muted">
+          ${s.cli_cheatsheet_fr.map(c => `<li>${c}</li>`).join('')}
+        </ul>
+      `;
+      document.getElementById('panel-rag').textContent = s.rag_roadmap_fr;
+    }
+
+    function uniqUsages(models) {
+      const u = new Set();
+      models.forEach(m => (m.usage || []).forEach(x => u.add(x)));
+      return [...u].sort();
+    }
+
+    function renderCatalog(catalog, filterUsage) {
+      const models = catalog.models || [];
+      const pills = document.getElementById('pills');
+      const usages = uniqUsages(models);
+      pills.innerHTML = '<span class="pill' + (!filterUsage ? ' on' : '') + '" data-u="">tous</span>' +
+        usages.map(u => `<span class="pill${filterUsage === u ? ' on' : ''}" data-u="${u}">${u}</span>`).join('');
+      pills.querySelectorAll('.pill').forEach(el => {
+        el.onclick = () => renderCatalog(catalog, el.dataset.u || null);
+      });
+      const list = models.filter(m => {
+        if (!filterUsage) return true;
+        return (m.usage || []).some(x => x === filterUsage);
+      });
+      document.getElementById('catalog').innerHTML = list.map(m => `
+        <div class="card">
+          <strong>${m.id}</strong> <span class="muted">[${m.kind}]</span>
+          <span class="muted"> · ~${m.approx_size_mb} Mo</span><br/>
+          ${m.label}<br/>
+          <span class="muted">${(m.usage || []).join(', ')}</span><br/>
+          <small class="muted">${m.note_fr || ''}</small><br/>
+          <code>oaas models pull ${m.id} --patch-config</code>
+        </div>
+      `).join('') || '<p class="muted">Aucun modèle pour ce filtre.</p>';
+    }
+
+    const proj = document.getElementById('proj');
+    proj.value = localStorage.getItem(LS_KEY) || '';
+    proj.addEventListener('change', () => localStorage.setItem(LS_KEY, proj.value.trim()));
+
+    async function showIdeError(msg) {
+      const el = document.getElementById('panel-ide');
+      el.innerHTML = '<p class="err">' + msg + '</p>';
+    }
+
+    async function loadIdePanel() {
+      const el = document.getElementById('panel-ide');
+      const msg = (t) => { document.getElementById('ide-msg').textContent = t || ''; };
+      try {
+        const r = await fetch('/oaas/ide/continue-status');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const st = await r.json();
+        const ed = st.editors || {};
+        const edButtons = ['code', 'cursor', 'codium'].map(name => {
+          const ok = ed[name];
+          return '<button type="button" class="secondary" data-ed="' + name + '"' + (ok ? '' : ' disabled title="Binaire non trouvé dans le PATH"') + '>Ouvrir projet dans ' + name + '</button>';
+        }).join(' ');
+        el.innerHTML =
+          '<p><strong>Fichier Continue</strong> : <code class="mono">' + st.continue_yaml + '</code> ' +
+          (st.yaml_exists ? '(présent)' : '(absent — sera créé)') + '</p>' +
+          '<p class="muted">Cible API pour Continue : <code>' + st.api_base_target + '</code> · bloc OAAS déjà présent : <strong>' + (st.has_oaas_block ? 'oui' : 'non') + '</strong></p>' +
+          '<label for="ide-model">Surcharge id modèle (optionnel)</label>' +
+          '<input type="text" id="ide-model" placeholder="vide = premier modèle renvoyé par llama-server (GET /v1/models)" />' +
+          '<div class="row" style="margin-top:0.75rem">' +
+          '<button type="button" id="btn-apply-continue">Écrire / fusionner le bloc OAAS dans config.yaml</button>' +
+          '</div>' +
+          '<p class="muted" style="margin-top:1rem">Ouvre le dossier du champ « projet » (répertoire uniquement, sous $HOME) :</p>' +
+          '<div class="row">' + edButtons + '</div>';
+        document.getElementById('btn-apply-continue').onclick = async () => {
+          msg('Écriture en cours…');
+          const model = (document.getElementById('ide-model').value || '').trim();
+          const body = model ? { model } : {};
+          const pr = await fetch('/oaas/ide/apply-continue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const j = await pr.json().catch(() => ({}));
+          if (!pr.ok) {
+            msg((j.error && j.error.message) ? j.error.message : 'Erreur ' + pr.status);
+            return;
+          }
+          msg(j.message || 'OK');
+          loadIdePanel();
+        };
+        el.querySelectorAll('button[data-ed]').forEach(btn => {
+          btn.onclick = async () => {
+            const p = (document.getElementById('proj').value || '').trim();
+            if (!p) { msg('Indique d’abord le chemin du projet.'); return; }
+            msg('Lancement éditeur…');
+            const pr = await fetch('/oaas/ide/open-folder', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: p, editor: btn.getAttribute('data-ed') }),
+            });
+            const j = await pr.json().catch(() => ({}));
+            if (!pr.ok) {
+              msg((j.error && j.error.message) ? j.error.message : 'Erreur ' + pr.status);
+              return;
+            }
+            msg(j.message || 'OK');
+          };
+        });
+      } catch (e) {
+        await showIdeError('IDE : ' + e);
+      }
+    }
+
+    Promise.all([
+      fetch('/oaas/status.json').then(r => { if (!r.ok) throw new Error('status ' + r.status); return r.json(); }),
+      fetch('/oaas/catalog.json').then(r => { if (!r.ok) throw new Error('catalog ' + r.status); return r.json(); }),
+    ]).then(([s, c]) => {
+      renderStatus(s);
+      renderCatalog(c, null);
+      loadIdePanel();
+    }).catch(e => {
+      document.getElementById('err').style.display = 'block';
+      document.getElementById('err').textContent = 'Erreur : ' + e;
+      document.getElementById('panel-status').innerHTML = '<p class="err">Impossible de joindre OAAS. Vérifie que le serveur tourne et que tu ouvres cette page sur la même origine (même hôte/port que <code>server.bind</code>).</p>';
+    });
+  </script>
+</body>
+</html>
