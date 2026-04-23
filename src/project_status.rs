@@ -262,3 +262,29 @@ pub async fn gather_workstation_status(
         cargo_build_ok,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use super::{classify_exe, manifest_dir};
+
+    #[test]
+    fn classify_exe_kinds() {
+        assert_eq!(
+            classify_exe(Path::new("/home/u/proj/target/debug/oaas")),
+            "debug"
+        );
+        assert_eq!(
+            classify_exe(Path::new("/home/u/proj/target/release/oaas")),
+            "release"
+        );
+        assert_eq!(classify_exe(Path::new("/usr/local/bin/oaas")), "installed_or_other");
+    }
+
+    #[test]
+    fn manifest_dir_is_crate_root() {
+        let d = manifest_dir();
+        assert!(std::path::Path::new(d).join("Cargo.toml").is_file());
+    }
+}

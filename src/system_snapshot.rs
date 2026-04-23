@@ -305,7 +305,71 @@ fn json_as_u32(v: &serde_json::Value) -> Option<u32> {
         .map(|n| n as u32)
         .or_else(|| v.as_i64().map(|n| n as u32))
         .or_else(|| {
-            v.as_str()
-                .and_then(|s| s.trim().replace('%', "").parse().ok())
+            v.as_str().and_then(|s| {
+                s.trim()
+                    .replace('%', "")
+                    .trim()
+                    .parse()
+                    .ok()
+            })
         })
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use serde_json::json;
+
+    use super::{json_as_string, json_as_u32, json_as_u64, read_loadavg, read_proc_stat_per_cpu};
+
+    #[test]
+    fn json_as_string_from_str_or_int() {
+        assert_eq!(json_as_string(&json!("Navi 31")), Some("Navi 31".into()));
+        assert_eq!(json_as_string(&json!(7)), Some("7".into()));
+    }
+
+    #[test]
+    fn json_as_u64_flexible() {
+        assert_eq!(json_as_u64(&json!(8192_u64)), Some(8192));
+        assert_eq!(json_as_u64(&json!("4096")), Some(4096));
+    }
+
+    #[test]
+    fn json_as_u32_percent_string() {
+        assert_eq!(json_as_u32(&json!("12 %")), Some(12));
+        assert_eq!(json_as_u32(&json!(33)), Some(33));
+    }
+
+    /// Champs proches de `rocm-smi --json` (variantes documentées dans le parseur).
+    #[test]
+    fn rocm_like_card_object() {
+        let card = json!({
+            "Card Series": "RX 7900 XT",
+            "GPU use (%)": "3 %",
+            "VRAM Total Memory (B)": "25769803776",
+            "VRAM Total Used Memory (B)": "1073741824"
+        });
+        let co = card.as_object().unwrap();
+        let name = co
+            .get("Card Series")
+            .and_then(json_as_string)
+            .unwrap_or_else(|| "AMD GPU".into());
+        assert!(name.contains("7900"));
+        let util = co.get("GPU use (%)").and_then(json_as_u32);
+        assert_eq!(util, Some(3));
+        let total_mb = co.get("VRAM Total Memory (B)").and_then(json_as_u64).map(|b| b / (1024 * 1024));
+        assert_eq!(total_mb, Some(24576));
+    }
+
+    #[test]
+    fn loadavg_readable() {
+        let (a, b, c) = read_loadavg();
+        assert!(a.is_some() && b.is_some() && c.is_some());
+    }
+
+    #[test]
+    fn proc_stat_has_cpu_cores() {
+        let m = read_proc_stat_per_cpu();
+        assert!(m.is_some());
+        assert!(!m.unwrap().is_empty());
+    }
 }

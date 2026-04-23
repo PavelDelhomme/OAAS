@@ -43,6 +43,7 @@ Document **vivant** : objectifs finaux, état réel des fonctionnalités, tests 
 - [ ] `oaas status` **sans** serveur puis **avec** `make serve` : TCP + HTTP UI passent à OK.
 - [ ] `make status-ci` dans le dépôt (CI local) après modifications Rust.
 - [ ] `make install-user` puis `oaas status` depuis `$HOME` (PATH).
+- [x] `cargo test` : helpers JSON ROCm (`json_as_u32` avec chaînes « N % »), `/proc`, `classify_exe`.
 
 ---
 
@@ -52,7 +53,7 @@ Document **vivant** : objectifs finaux, état réel des fonctionnalités, tests 
 
 1. Ajuster parse **ROCm** selon retours terrain (exemples JSON `rocm-smi` 5.x / 6.x).
 2. Option **workspace** `.continue/config.yaml` (en plus du global).
-3. **Tests d’intégration** minimaux (parse `system_snapshot`, `project_status` avec fichiers temporaires).
+3. ~~**Tests d’intégration** minimaux~~ → **tests unitaires** dans `system_snapshot` + `project_status` (`cargo test`) ; tests E2E / fichiers temporaires encore ouverts si besoin.
 
 ### Moyen terme
 
@@ -75,4 +76,4 @@ Document **vivant** : objectifs finaux, état réel des fonctionnalités, tests 
 
 ---
 
-*Dernière mise à jour : générée avec la livraison « status + CPU/ROCm + Continue JSON/backup + workstation.json ».*
+*Dernière mise à jour : tests `cargo test` (parse ROCm-like + `/proc` + `classify_exe`), correctif `json_as_u32` pour chaînes « 12 % ».*
