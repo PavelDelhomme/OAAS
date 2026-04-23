@@ -5,7 +5,9 @@ use serde::Serialize;
 
 use crate::app_state::AppState;
 use crate::models_catalog::ModelsCatalogRoot;
+use crate::project_status::{gather_workstation_status, WorkstationStatus};
 use crate::serve_dashboard::OaasStatus;
+use crate::system_snapshot::{collect_snapshot, SystemSnapshot};
 
 #[derive(Serialize)]
 pub struct RootInfo {
@@ -22,6 +24,8 @@ pub struct RootInfo {
     pub oaas_ide_continue_status: &'static str,
     pub oaas_ide_apply_continue: &'static str,
     pub oaas_ide_open_folder: &'static str,
+    pub oaas_system_json: &'static str,
+    pub oaas_workstation_json: &'static str,
 }
 
 #[derive(Serialize)]
@@ -50,6 +54,8 @@ pub async fn root(State(state): State<AppState>) -> Json<RootInfo> {
         oaas_ide_continue_status: "/oaas/ide/continue-status",
         oaas_ide_apply_continue: "/oaas/ide/apply-continue",
         oaas_ide_open_folder: "/oaas/ide/open-folder",
+        oaas_system_json: "/oaas/system.json",
+        oaas_workstation_json: "/oaas/workstation.json",
     })
 }
 
@@ -59,6 +65,15 @@ pub async fn oaas_catalog(State(state): State<AppState>) -> Json<ModelsCatalogRo
 
 pub async fn oaas_status(State(state): State<AppState>) -> Json<OaasStatus> {
     Json((*state.status).clone())
+}
+
+pub async fn oaas_system(State(state): State<AppState>) -> Json<SystemSnapshot> {
+    Json(collect_snapshot(state.llama_pid).await)
+}
+
+pub async fn oaas_workstation(State(state): State<AppState>) -> Json<WorkstationStatus> {
+    let profile = state.status.active_profile.clone();
+    Json(gather_workstation_status(None, &profile, false).await)
 }
 
 pub async fn oaas_ui() -> Html<&'static str> {

@@ -30,7 +30,7 @@ pub struct OaasStatus {
     pub rag_roadmap_fr: String,
 }
 
-fn client_facing_host(bind: &str) -> String {
+pub fn client_facing_host(bind: &str) -> String {
     if let Some(port) = bind.strip_prefix("0.0.0.0:") {
         format!("127.0.0.1:{port}")
     } else if let Some(port) = bind.strip_prefix("[::]:") {
@@ -60,6 +60,8 @@ pub fn build_oaas_status(
         })
         .collect();
     let cli_cheatsheet_fr = vec![
+        "oaas status".into(),
+        "oaas status --ci".into(),
         "oaas models recommend".into(),
         "oaas models list".into(),
         "oaas models pull <id> --patch-config".into(),

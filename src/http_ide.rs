@@ -4,9 +4,9 @@ use serde::Deserialize;
 
 use crate::app_state::AppState;
 use crate::continue_ide::{
-    build_continue_ide_status, continue_global_yaml_path, fetch_first_model_id,
-    merge_oaas_into_continue_yaml, resolve_dir_under_home, spawn_editor_open_folder,
-    ContinueIdeStatus,
+    build_continue_ide_status, continue_resolve_write_path, fetch_first_model_id,
+    merge_oaas_into_continue_json, merge_oaas_into_continue_yaml, resolve_dir_under_home,
+    spawn_editor_open_folder, ContinueIdeStatus,
 };
 use crate::error::OaasError;
 
@@ -40,13 +40,16 @@ pub async fn post_apply_continue(
     } else {
         fetch_first_model_id(&state.proxy.client, &state.proxy.upstream).await?
     };
-    let path = continue_global_yaml_path()?;
-    let msg = merge_oaas_into_continue_yaml(&path, &api, &model_id)?;
+    let path = continue_resolve_write_path()?;
+    let msg = match path.extension().and_then(|s| s.to_str()) {
+        Some("json") => merge_oaas_into_continue_json(&path, &api, &model_id)?,
+        _ => merge_oaas_into_continue_yaml(&path, &api, &model_id)?,
+    };
     Ok(Json(serde_json::json!({
         "ok": true,
         "message": msg,
         "model": model_id,
-        "continue_yaml": path.display().to_string(),
+        "continue_config": path.display().to_string(),
     })))
 }
 

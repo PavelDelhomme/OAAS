@@ -15,8 +15,9 @@ models:
     family: qwen3.5
     kind: instruct
     hf_repo: bartowski/Qwen_Qwen3.5-4B-GGUF
-    filename: Qwen3.5-4B-Q4_K_M.gguf
-    approx_size_mb: 2940
+    # Nom exact côté HF (préfixe Qwen_Qwen3.5, pas Qwen3.5) — sinon resolve → 404.
+    filename: Qwen_Qwen3.5-4B-Q4_K_M.gguf
+    approx_size_mb: 2740
     usage: [general, dev, docs, diagnostic]
     note_fr: "Meilleur compromis taille / polyvalence Qwen3.5. Idéal pour démarrer sur laptop. Pas spécialisé « code only » mais très bon en assistant projet."
 
@@ -25,8 +26,8 @@ models:
     family: qwen3.5
     kind: instruct
     hf_repo: bartowski/Qwen_Qwen3.5-4B-GGUF
-    filename: Qwen3.5-4B-Q5_K_M.gguf
-    approx_size_mb: 3400
+    filename: Qwen_Qwen3.5-4B-Q5_K_M.gguf
+    approx_size_mb: 3170
     usage: [general, dev, docs]
     note_fr: "Si tu as un peu plus de VRAM/RAM : meilleure fidélité que Q4_K_M."
 

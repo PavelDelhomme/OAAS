@@ -59,6 +59,17 @@ impl LlamaBackend {
 
         Ok(Self { child })
     }
+
+    /// PID du processus `llama-server` (Unix), pour métriques `/oaas/system.json`.
+    #[cfg(unix)]
+    pub fn llama_pid(&self) -> Option<u32> {
+        self.child.id()
+    }
+
+    #[cfg(not(unix))]
+    pub fn llama_pid(&self) -> Option<u32> {
+        None
+    }
 }
 
 /// Attend que l’API llama-server réponde (GET /v1/models ou /health selon version).

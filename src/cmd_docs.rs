@@ -26,7 +26,10 @@ pub enum DocsCommand {
     Path { id: String },
     /// Aide DevDocs (Docker, devdocs.io, clone Ruby) — même approche que https://github.com/freeCodeCamp/devdocs
     Devdocs {
-        #[arg(long, help = "Lance « docker run » (conteneur oaas-devdocs, port 9292)")]
+        #[arg(
+            long,
+            help = "Lance « docker run » (conteneur oaas-devdocs, port 9292)"
+        )]
         docker: bool,
     },
 }
@@ -170,9 +173,9 @@ async fn install_devdocs_notes(
     p: &crate::docs_catalog::DocPack,
     force: bool,
 ) -> Result<(), OaasError> {
-    tokio::fs::create_dir_all(dest).await.map_err(|e| {
-        OaasError::Backend(format!("mkdir {}: {e}", dest.display()))
-    })?;
+    tokio::fs::create_dir_all(dest)
+        .await
+        .map_err(|e| OaasError::Backend(format!("mkdir {}: {e}", dest.display())))?;
     let f = dest.join("OAAS_DEVDOCS.txt");
     if f.exists() && !force {
         info!(path = %f.display(), "notes DevDocs déjà présentes (--force pour réécrire)");
@@ -191,9 +194,9 @@ async fn install_devdocs_notes(
          Mise à jour des docs dans le conteneur : suivre la doc DevDocs (thor docs:download --installed en install manuelle).\n\n\
          devdocs.io (hébergé) : https://devdocs.io\n",
     );
-    tokio::fs::write(&f, body).await.map_err(|e| {
-        OaasError::Backend(format!("écriture {}: {e}", f.display()))
-    })?;
+    tokio::fs::write(&f, body)
+        .await
+        .map_err(|e| OaasError::Backend(format!("écriture {}: {e}", f.display())))?;
     Ok(())
 }
 
@@ -226,7 +229,10 @@ async fn try_devdocs_docker(
             .await
             .map_err(|e| OaasError::Backend(format!("docker inspect: {e}")))?;
         if st.success() {
-            info!(container = name, "conteneur déjà présent — pas de nouveau run (utilise --force sur pull)");
+            info!(
+                container = name,
+                "conteneur déjà présent — pas de nouveau run (utilise --force sur pull)"
+            );
             return Ok(());
         }
     }

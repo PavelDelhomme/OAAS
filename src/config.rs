@@ -159,3 +159,41 @@ pub fn patch_profile_model_path(
         .map_err(|e| OaasError::Config(format!("écriture {}: {e}", config_path.display())))?;
     Ok(())
 }
+
+/// Met à jour `prompt_compression.enabled` dans le YAML (réécriture complète du fichier).
+pub fn patch_prompt_compression_enabled(
+    config_path: &Path,
+    enabled: bool,
+) -> Result<(), OaasError> {
+    let raw = std::fs::read_to_string(config_path).map_err(|e| {
+        OaasError::Config(format!("impossible de lire {}: {e}", config_path.display()))
+    })?;
+    let mut v: serde_yaml::Value = serde_yaml::from_str(&raw).map_err(|e| {
+        OaasError::Config(format!("YAML invalide dans {}: {e}", config_path.display()))
+    })?;
+    let root = v.as_mapping_mut().ok_or_else(|| {
+        OaasError::Config("racine YAML : attendu un mapping".into())
+    })?;
+    let pc_key = serde_yaml::Value::String("prompt_compression".into());
+    if !root.contains_key(&pc_key) {
+        root.insert(
+            pc_key.clone(),
+            serde_yaml::Value::Mapping(serde_yaml::Mapping::new()),
+        );
+    }
+    let pc_node = root.get_mut(&pc_key).ok_or_else(|| {
+        OaasError::Config("prompt_compression : entrée YAML introuvable".into())
+    })?;
+    let m = pc_node.as_mapping_mut().ok_or_else(|| {
+        OaasError::Config("prompt_compression : attendu un mapping YAML".into())
+    })?;
+    m.insert(
+        serde_yaml::Value::String("enabled".into()),
+        serde_yaml::Value::Bool(enabled),
+    );
+    let out = serde_yaml::to_string(&v)
+        .map_err(|e| OaasError::Config(format!("sérialisation YAML: {e}")))?;
+    std::fs::write(config_path, out)
+        .map_err(|e| OaasError::Config(format!("écriture {}: {e}", config_path.display())))?;
+    Ok(())
+}

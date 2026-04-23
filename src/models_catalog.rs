@@ -121,15 +121,18 @@ pub fn recommend_picks(catalog: &ModelsCatalogRoot) -> Vec<RecommendPick> {
         ("doc", "Doc / spec", "qwen2.5-7b-instruct-q4km"),
         ("puissant", "Station puissante", "qwen3.5-35b-a3b-q4km"),
     ];
-    ROWS
-        .iter()
+    ROWS.iter()
         .filter_map(|(key, desc, id)| {
-            catalog.models.iter().find(|m| m.id == *id).map(|m| RecommendPick {
-                key: (*key).to_string(),
-                description_fr: (*desc).to_string(),
-                model_id: m.id.clone(),
-                label: m.label.clone(),
-            })
+            catalog
+                .models
+                .iter()
+                .find(|m| m.id == *id)
+                .map(|m| RecommendPick {
+                    key: (*key).to_string(),
+                    description_fr: (*desc).to_string(),
+                    model_id: m.id.clone(),
+                    label: m.label.clone(),
+                })
         })
         .collect()
 }

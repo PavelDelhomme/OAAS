@@ -2,20 +2,23 @@ mod app_state;
 mod backend;
 mod cmd_docs;
 mod cmd_models;
+mod cmd_status;
 mod config;
+mod continue_ide;
 mod docs_catalog;
 mod doctor;
 mod download;
 mod error;
-mod http_root;
 mod http_ide;
-mod continue_ide;
+mod http_root;
 mod init_config;
 mod llmlingua;
 mod models_catalog;
+mod project_status;
 mod proxy;
 mod runtime;
 mod serve_dashboard;
+mod system_snapshot;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -36,14 +39,15 @@ use crate::app_state::AppState;
 use crate::backend::{wait_upstream_ready, LlamaBackend};
 use crate::cmd_docs::DocsCommand;
 use crate::cmd_models::ModelsCommand;
+use crate::cmd_status::{run_status, StatusCli};
 use crate::config::{default_config_path, load_config};
 use crate::error::OaasError;
 use crate::http_ide::{get_continue_status, post_apply_continue, post_open_folder};
-use crate::http_root::{oaas_catalog, oaas_status, oaas_ui, root};
-use crate::serve_dashboard::build_oaas_status;
+use crate::http_root::{oaas_catalog, oaas_status, oaas_system, oaas_ui, oaas_workstation, root};
 use crate::models_catalog::load_models_catalog;
 use crate::proxy::{build_client, forward_request, ProxyState};
 use crate::runtime::resolve_llama_binary;
+use crate::serve_dashboard::build_oaas_status;
 
 #[derive(Parser)]
 #[command(
@@ -63,6 +67,9 @@ enum Commands {
         config: Option<PathBuf>,
         #[arg(long, default_value = "default", env = "OAAS_PROFILE")]
         profile: String,
+        /// Corrige dans le YAML ce qui est sûr sans réseau (ex. désactive LLMLingua si import / script / commande cassés).
+        #[arg(long, visible_alias = "fix-issues")]
+        fix: bool,
     },
     InitConfig {
         #[arg(long)]
@@ -86,6 +93,8 @@ enum Commands {
         #[arg(long, default_value = "default", env = "OAAS_PROFILE")]
         profile: String,
     },
+    /// Synthèse : config, GGUF, port OAAS, UI, Continue ; `--ci` lance fmt/clippy/build.
+    Status(StatusCli),
 }
 
 #[tokio::main]
@@ -103,8 +112,8 @@ async fn main() {
 
 async fn run_cli(cli: Cli) -> Result<(), OaasError> {
     match cli.command {
-        Commands::Doctor { config, profile } => {
-            crate::doctor::run_doctor(config, profile);
+        Commands::Doctor { config, profile, fix } => {
+            crate::doctor::run_doctor(config, profile, fix);
             Ok(())
         }
         Commands::InitConfig { force, output } => {
@@ -114,6 +123,7 @@ async fn run_cli(cli: Cli) -> Result<(), OaasError> {
         Commands::Models { command } => crate::cmd_models::run_models(command).await,
         Commands::Docs { command } => crate::cmd_docs::run_docs(command).await,
         Commands::Serve { config, profile } => run_serve(config, profile).await,
+        Commands::Status(args) => run_status(args).await,
     }
 }
 
@@ -139,7 +149,8 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
         .clone();
 
     let llama_bin = resolve_llama_binary(&cfg.runtime.llama_server_binary)?;
-    let _backend = LlamaBackend::spawn(&llama_bin, &profile).await?;
+    let backend = LlamaBackend::spawn(&llama_bin, &profile).await?;
+    let llama_pid = backend.llama_pid();
 
     let upstream_base = format!("http://127.0.0.1:{}", profile.internal_port);
     wait_upstream_ready(&upstream_base, Duration::from_secs(120)).await?;
@@ -174,17 +185,13 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
     };
 
     let catalog_root = load_models_catalog()?;
-    let status = Arc::new(build_oaas_status(
-        &cfg,
-        &path,
-        &profile_name,
-        &catalog_root,
-    ));
+    let status = Arc::new(build_oaas_status(&cfg, &path, &profile_name, &catalog_root));
     let catalog = Arc::new(catalog_root);
     let app_state = AppState {
         proxy,
         catalog: catalog.clone(),
         status,
+        llama_pid,
     };
 
     let app = Router::new()
@@ -192,12 +199,11 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
         .route("/oaas/", get(oaas_ui))
         .route("/oaas/catalog.json", get(oaas_catalog))
         .route("/oaas/status.json", get(oaas_status))
-        .route(
-            "/oaas/ide/continue-status",
-            get(get_continue_status),
-        )
+        .route("/oaas/ide/continue-status", get(get_continue_status))
         .route("/oaas/ide/apply-continue", post(post_apply_continue))
         .route("/oaas/ide/open-folder", post(post_open_folder))
+        .route("/oaas/system.json", get(oaas_system))
+        .route("/oaas/workstation.json", get(oaas_workstation))
         .fallback(any(proxy_handler))
         .layer(axum::extract::DefaultBodyLimit::max(64 * 1024 * 1024))
         .with_state(app_state);
@@ -212,7 +218,7 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
         profile = %profile_name,
         models_ui = %format!("http://{}/oaas/", cfg.server.bind),
         status_json = %format!("http://{}/oaas/status.json", cfg.server.bind),
-        "OAAS prêt — /v1 ; UI /oaas/ ; statut /oaas/status.json ; IDE /oaas/ide/*"
+        "OAAS prêt — /v1 ; /oaas/ ; status.json ; system.json ; workstation.json ; /oaas/ide/*"
     );
 
     let server = axum::serve(listener, app).with_graceful_shutdown(shutdown_signal());

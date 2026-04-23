@@ -22,8 +22,15 @@
     }
     h1 { font-size: 1.35rem; font-weight: 650; margin: 0 0 0.35rem; }
     h2 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; color: #b8c0d0; font-weight: 600; }
+    h2:first-child { margin-top: 0; }
     .wrap { max-width: 58rem; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; }
     .muted { color: #8b95a8; font-size: 0.9rem; }
+    .toc {
+      display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+      padding: 0.65rem 0.85rem; margin: 1rem 0 0;
+      background: #161a21; border: 1px solid #2a3140; border-radius: 8px; font-size: 0.88rem;
+    }
+    .toc a { color: #9ec5ff; }
     .card {
       background: #161a21;
       border: 1px solid #2a3140;
@@ -33,7 +40,7 @@
     }
     .row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
     .grow { flex: 1; min-width: 12rem; }
-    button {
+    button, .link-btn {
       background: #2d6cdf;
       color: #fff;
       border: none;
@@ -41,9 +48,18 @@
       padding: 0.45rem 0.85rem;
       font-size: 0.9rem;
       cursor: pointer;
+      display: inline-block;
+      text-decoration: none;
+      font-family: inherit;
+      box-sizing: border-box;
     }
-    button.secondary { background: #3a4252; color: #e6e9ef; }
-    button:hover { filter: brightness(1.08); }
+    button.secondary, .link-btn.secondary { background: #3a4252; color: #e6e9ef; }
+    button:hover, .link-btn:hover { filter: brightness(1.08); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
+    button:focus-visible, .link-btn:focus-visible, .pill:focus-visible, input:focus-visible {
+      outline: 2px solid #6cb6ff;
+      outline-offset: 2px;
+    }
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
     th, td { text-align: left; padding: 0.45rem 0.35rem; border-bottom: 1px solid #2a3140; vertical-align: top; }
     th { color: #8b95a8; font-weight: 600; }
@@ -64,6 +80,7 @@
       .grid-2 { grid-template-columns: 1fr 1fr; }
     }
     .err { color: #f88; }
+    .ok { color: #8ecf9a; }
     label { font-size: 0.85rem; color: #8b95a8; display: block; margin-bottom: 0.25rem; }
     input[type="text"] {
       width: 100%;
@@ -76,53 +93,83 @@
       font-family: inherit;
     }
     small.hint { display: block; margin-top: 0.35rem; }
+    .anchor { scroll-margin-top: 0.75rem; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>OAAS — tableau de bord</h1>
     <p class="muted">Servi par <code>make serve</code> / <code>oaas serve</code>. Le terminal reste la référence pour <code>pull</code> et <code>doctor</code>.</p>
+    <nav class="toc" aria-label="Sections">
+      <a href="#statut">Statut</a>
+      <a href="#projet">Projet</a>
+      <a href="#api">API Continue</a>
+      <a href="#ide">Continue + éditeur</a>
+      <a href="#reco">Recommandations</a>
+      <a href="#catalogue">Catalogue</a>
+      <a href="#systeme">Système</a>
+      <a href="#roadmap">Roadmap</a>
+    </nav>
     <div id="err" class="err" style="display:none"></div>
 
     <div class="grid grid-2" style="margin-top:1rem">
-      <div class="card" id="panel-status">
+      <div class="card anchor" id="statut">
         <p>Chargement <code>/oaas/status.json</code>…</p>
       </div>
-      <div class="card">
+      <div class="card anchor" id="projet">
         <h2 style="margin-top:0">Projet (Continue / IDE)</h2>
         <p class="muted">Le dossier de travail se choisit dans l’IDE (VS Code, Cursor…). OAAS ne remplace pas l’IDE : enregistre ici un repère persistant (navigateur seulement).</p>
-        <label for="proj">Chemin ou nom du projet courant</label>
+        <label for="proj">Chemin du projet courant</label>
         <input type="text" id="proj" placeholder="ex. ~/Documents/Dev/mon-repo" autocomplete="off" />
-        <small class="hint muted">Stocké dans le navigateur (localStorage). Utilisé par les boutons « ouvrir dans … » ci-dessous (le serveur vérifie que le chemin est sous <code>$HOME</code>).</small>
+        <small class="hint muted">Sauvegardé dans le navigateur à chaque modification. Utilisé par « ouvrir dans … » (chemins sous <code>$HOME</code> uniquement, côté serveur).</small>
       </div>
     </div>
 
-    <h2>API Continue (OpenAI-compatible)</h2>
+    <h2 class="anchor" id="api">API Continue (OpenAI-compatible)</h2>
     <div class="card" id="panel-api">
         <p class="muted">Définis dans Continue : base URL = valeur ci-dessous + clé factice en local.</p>
     </div>
 
-    <h2>Continue + éditeur (Code OSS, Cursor, VSCodium)</h2>
+    <h2 class="anchor" id="ide">Continue + éditeur (Code OSS, Cursor, VSCodium)</h2>
     <p class="muted">OAAS peut <strong>écrire</strong> le bloc modèle dans <code>~/.continue/config.yaml</code> (format <a href="https://docs.continue.dev/reference" target="_blank" rel="noopener">Continue YAML</a>) et <strong>lancer</strong> ton éditeur sur le dossier projet (chemin ci-dessus, sous <code>$HOME</code> uniquement). Ce n’est pas un clone de Cursor : c’est le pont pratique vers l’extension Continue déjà installée.</p>
     <div class="card" id="panel-ide">
       <p class="muted">Chargement <code>/oaas/ide/continue-status</code>…</p>
     </div>
     <p id="ide-msg" class="muted" style="min-height:1.25rem"></p>
 
-    <h2>Recommandations (comme <code>oaas models recommend</code>)</h2>
+    <h2 class="anchor" id="reco">Recommandations (comme <code>oaas models recommend</code>)</h2>
     <div class="card" id="panel-rec"></div>
 
-    <h2>Catalogue GGUF</h2>
+    <h2 class="anchor" id="catalogue">Catalogue GGUF</h2>
     <p class="muted">Filtre par usage puis copie la commande <code>oaas models pull …</code>.</p>
     <div id="pills"></div>
     <div id="catalog"></div>
 
-    <h2>Feuille de route</h2>
+    <h2 class="anchor" id="systeme">Système (CPU / RAM / GPU)</h2>
+    <p class="muted">Instantané Linux : <code>/proc</code> (charge, RAM, RSS OAAS + llama), <strong>CPU par cœur</strong> (échantillon ~200 ms), <code>nvidia-smi</code> (NVIDIA) et <code>rocm-smi --json</code> (AMD ROCm). Synthèse poste (hors serveur) : <code>oaas status</code> ou <code>/oaas/workstation.json</code> quand OAAS tourne.</p>
+    <div class="card" id="panel-system">
+      <p class="muted">Chargement <code>/oaas/system.json</code>…</p>
+    </div>
+    <div class="row" style="margin:0.5rem 0 0">
+      <button type="button" class="secondary" id="btn-system-refresh">Actualiser maintenant</button>
+      <span class="muted" id="system-updated"></span>
+    </div>
+
+    <h2 class="anchor" id="roadmap">Feuille de route</h2>
     <div class="card muted" id="panel-rag"></div>
   </div>
 
   <script>
     const LS_KEY = 'oaas_ui_project_path';
+
+    function esc(s) {
+      if (s == null || s === undefined) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
 
     function copyText(t, btn) {
       navigator.clipboard.writeText(t).then(() => {
@@ -133,13 +180,13 @@
     }
 
     function renderStatus(s) {
-      document.getElementById('panel-status').innerHTML = `
+      document.getElementById('statut').innerHTML = `
         <div class="row">
           <div class="grow">
-            <div><strong>Version</strong> ${s.version}</div>
-            <div class="muted mono" style="margin-top:0.35rem">Config : ${s.config_path}</div>
-            <div class="muted" style="margin-top:0.35rem">Écoute : <code>${s.server_bind}</code> · clients : <code>${s.client_host}</code></div>
-            <div style="margin-top:0.5rem">Profil actif : <strong>${s.active_profile}</strong></div>
+            <div><strong>Version</strong> ${esc(s.version)}</div>
+            <div class="muted mono" style="margin-top:0.35rem">Config : ${esc(s.config_path)}</div>
+            <div class="muted" style="margin-top:0.35rem">Écoute : <code>${esc(s.server_bind)}</code> · clients : <code>${esc(s.client_host)}</code></div>
+            <div style="margin-top:0.5rem">Profil actif : <strong>${esc(s.active_profile)}</strong></div>
           </div>
         </div>
         <h2 style="margin-top:1rem">Profils YAML</h2>
@@ -147,20 +194,21 @@
           <thead><tr><th>Nom</th><th>Modèle (.gguf)</th><th>Port llama</th></tr></thead>
           <tbody>
             ${s.profiles.map(p => `<tr class="${p.active ? 'active' : ''}">
-              <td>${p.active ? '● ' : ''}${p.name}</td>
-              <td class="mono" style="word-break:break-all">${p.model}</td>
-              <td>${p.internal_port}</td>
+              <td>${p.active ? '● ' : ''}${esc(p.name)}</td>
+              <td class="mono" style="word-break:break-all">${esc(p.model)}</td>
+              <td>${esc(String(p.internal_port))}</td>
             </tr>`).join('')}
           </tbody>
         </table>
         <p class="muted" style="margin-top:0.75rem">Autre profil au démarrage : <code>OAAS_PROFILE=nom oaas serve</code></p>
       `;
       const api = s.api_base_url;
+      const modelsUrl = esc(api) + '/models';
       document.getElementById('panel-api').innerHTML = `
         <div class="row">
-          <code class="grow mono" id="api-url">${api}</code>
+          <code class="grow mono" id="api-url">${esc(api)}</code>
           <button type="button" id="btn-copy-api">Copier l’URL</button>
-          <a href="${api}/models" target="_blank" rel="noopener"><button type="button" class="secondary">GET /v1/models</button></a>
+          <a class="link-btn secondary" href="${modelsUrl}" target="_blank" rel="noopener">GET /v1/models</a>
         </div>
       `;
       document.getElementById('btn-copy-api').onclick = function() {
@@ -169,15 +217,19 @@
 
       document.getElementById('panel-rec').innerHTML = `
         <ul style="margin:0;padding-left:1.1rem">
-          ${s.recommend_picks.map(p => `<li><strong>${p.description_fr}</strong> — <code>${p.model_id}</code><br/><span class="muted">${p.label}</span><br/>
-            <code>oaas models pull ${p.model_id} --patch-config</code></li>`).join('')}
+          ${s.recommend_picks.map(p => `<li><strong>${esc(p.description_fr)}</strong> — <code>${esc(p.model_id)}</code><br/><span class="muted">${esc(p.label)}</span><br/>
+            <code>oaas models pull ${esc(p.model_id)} --patch-config</code>
+            <button type="button" class="secondary cmd-copy" data-cmd="oaas models pull ${esc(p.model_id)} --patch-config">Copier</button></li>`).join('')}
         </ul>
         <h2 style="margin-top:1rem">Raccourcis CLI</h2>
         <ul style="margin:0;padding-left:1.1rem" class="mono muted">
-          ${s.cli_cheatsheet_fr.map(c => `<li>${c}</li>`).join('')}
+          ${s.cli_cheatsheet_fr.map(c => `<li>${esc(c)}</li>`).join('')}
         </ul>
       `;
-      document.getElementById('panel-rag').textContent = s.rag_roadmap_fr;
+      document.querySelectorAll('#panel-rec .cmd-copy').forEach(btn => {
+        btn.addEventListener('click', () => copyText(btn.getAttribute('data-cmd'), btn));
+      });
+      document.getElementById('panel-rag').textContent = s.rag_roadmap_fr || '';
     }
 
     function uniqUsages(models) {
@@ -190,39 +242,118 @@
       const models = catalog.models || [];
       const pills = document.getElementById('pills');
       const usages = uniqUsages(models);
-      pills.innerHTML = '<span class="pill' + (!filterUsage ? ' on' : '') + '" data-u="">tous</span>' +
-        usages.map(u => `<span class="pill${filterUsage === u ? ' on' : ''}" data-u="${u}">${u}</span>`).join('');
+      pills.innerHTML = '<span class="pill' + (!filterUsage ? ' on' : '') + '" role="button" tabindex="0" data-u="">tous</span>' +
+        usages.map(u => `<span class="pill${filterUsage === u ? ' on' : ''}" role="button" tabindex="0" data-u="${esc(u)}">${esc(u)}</span>`).join('');
       pills.querySelectorAll('.pill').forEach(el => {
-        el.onclick = () => renderCatalog(catalog, el.dataset.u || null);
+        const go = () => renderCatalog(catalog, el.dataset.u || null);
+        el.onclick = go;
+        el.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } };
       });
       const list = models.filter(m => {
         if (!filterUsage) return true;
         return (m.usage || []).some(x => x === filterUsage);
       });
-      document.getElementById('catalog').innerHTML = list.map(m => `
+      document.getElementById('catalog').innerHTML = list.map(m => {
+        const cmd = 'oaas models pull ' + m.id + ' --patch-config';
+        return `
         <div class="card">
-          <strong>${m.id}</strong> <span class="muted">[${m.kind}]</span>
-          <span class="muted"> · ~${m.approx_size_mb} Mo</span><br/>
-          ${m.label}<br/>
-          <span class="muted">${(m.usage || []).join(', ')}</span><br/>
-          <small class="muted">${m.note_fr || ''}</small><br/>
-          <code>oaas models pull ${m.id} --patch-config</code>
+          <div class="row" style="margin-bottom:0.35rem">
+            <div class="grow">
+              <strong>${esc(m.id)}</strong> <span class="muted">[${esc(m.kind)}]</span>
+              <span class="muted"> · ~${esc(String(m.approx_size_mb))} Mo</span>
+            </div>
+            <button type="button" class="secondary cmd-copy" data-cmd="${esc(cmd)}">Copier pull</button>
+          </div>
+          ${esc(m.label)}<br/>
+          <span class="muted">${esc((m.usage || []).join(', '))}</span><br/>
+          <small class="muted">${esc(m.note_fr || '')}</small><br/>
+          <code>${esc(cmd)}</code>
         </div>
-      `).join('') || '<p class="muted">Aucun modèle pour ce filtre.</p>';
+      `;
+      }).join('') || '<p class="muted">Aucun modèle pour ce filtre.</p>';
+      document.querySelectorAll('#catalog .cmd-copy').forEach(btn => {
+        btn.addEventListener('click', () => copyText(btn.getAttribute('data-cmd'), btn));
+      });
+    }
+
+    function fmtLoad(v) {
+      return v == null ? '—' : Number(v).toFixed(2);
+    }
+
+    function renderSystem(j) {
+      const el = document.getElementById('panel-system');
+      if (j.note) {
+        el.innerHTML = '<p class="muted">' + esc(j.note) + '</p>';
+        return;
+      }
+      let coreHtml = '';
+      if (j.cpu_cores && j.cpu_cores.length) {
+        coreHtml = '<p style="margin:0.5rem 0 0"><strong>CPU par cœur</strong> (approx. %) : ' +
+          j.cpu_cores.map(c => '<code>cpu' + esc(String(c.index)) + '</code> ' +
+            (c.usage_percent != null ? esc(c.usage_percent.toFixed(0)) + '%' : '—')).join(' · ') + '</p>';
+      }
+      let gpuHtml = '';
+      if (j.gpus && j.gpus.length) {
+        gpuHtml = '<h3 style="margin:0.75rem 0 0.35rem;font-size:0.95rem;color:#b8c0d0">GPU</h3><ul style="margin:0;padding-left:1.1rem">';
+        j.gpus.forEach(g => {
+          const v = (g.vendor || '?').toUpperCase();
+          gpuHtml += '<li><span class="muted">' + esc(v) + '</span> <strong>' + esc(g.name) + '</strong>';
+          if (g.memory_used_mb != null && g.memory_total_mb != null) {
+            gpuHtml += ' — VRAM ' + esc(String(g.memory_used_mb)) + ' / ' + esc(String(g.memory_total_mb)) + ' MiB';
+          }
+          if (g.gpu_util_percent != null) gpuHtml += ' — util. ' + esc(String(g.gpu_util_percent)) + ' %';
+          gpuHtml += '</li>';
+        });
+        gpuHtml += '</ul>';
+      } else {
+        gpuHtml = '<p class="muted" style="margin-top:0.5rem">Aucun GPU détecté (<code>nvidia-smi</code> / <code>rocm-smi --json</code> absents ou erreurs).</p>';
+      }
+      el.innerHTML =
+        '<div class="row"><div class="grow"><strong>Charge</strong> 1 min : ' + fmtLoad(j.load_1) +
+        ' · 5 min : ' + fmtLoad(j.load_5) + ' · 15 min : ' + fmtLoad(j.load_15) + '</div></div>' +
+        coreHtml +
+        '<p style="margin:0.5rem 0 0"><strong>RAM machine</strong> : disponible ' +
+        (j.mem_available_mb != null ? esc(String(j.mem_available_mb)) : '—') + ' / total ' +
+        (j.mem_total_mb != null ? esc(String(j.mem_total_mb)) : '—') + ' MiB (MemAvailable / MemTotal)</p>' +
+        '<p><strong>RSS processus</strong> — OAAS : ' + (j.oaas_rss_mib != null ? esc(j.oaas_rss_mib.toFixed(1)) : '—') +
+        ' MiB · llama-server (pid ' + (j.llama_pid != null ? esc(String(j.llama_pid)) : '?') + ') : ' +
+        (j.llama_rss_mib != null ? esc(j.llama_rss_mib.toFixed(1)) : '—') + ' MiB</p>' +
+        gpuHtml;
+      document.getElementById('system-updated').textContent = 'Mis à jour : ' + new Date().toLocaleTimeString();
+    }
+
+    async function loadSystem() {
+      const el = document.getElementById('panel-system');
+      try {
+        const r = await fetch('/oaas/system.json');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        renderSystem(await r.json());
+      } catch (e) {
+        el.innerHTML = '<p class="err">' + esc(String(e)) + '</p>';
+      }
     }
 
     const proj = document.getElementById('proj');
     proj.value = localStorage.getItem(LS_KEY) || '';
-    proj.addEventListener('change', () => localStorage.setItem(LS_KEY, proj.value.trim()));
+    function saveProj() {
+      localStorage.setItem(LS_KEY, proj.value.trim());
+    }
+    proj.addEventListener('change', saveProj);
+    proj.addEventListener('input', saveProj);
 
     async function showIdeError(msg) {
       const el = document.getElementById('panel-ide');
-      el.innerHTML = '<p class="err">' + msg + '</p>';
+      el.innerHTML = '<p class="err">' + esc(msg) + '</p>';
     }
 
     async function loadIdePanel() {
       const el = document.getElementById('panel-ide');
-      const msg = (t) => { document.getElementById('ide-msg').textContent = t || ''; };
+      const msg = (t, ok) => {
+        const n = document.getElementById('ide-msg');
+        n.textContent = t || '';
+        n.className = ok ? 'ok' : 'muted';
+        n.style.minHeight = '1.25rem';
+      };
       try {
         const r = await fetch('/oaas/ide/continue-status');
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -230,12 +361,13 @@
         const ed = st.editors || {};
         const edButtons = ['code', 'cursor', 'codium'].map(name => {
           const ok = ed[name];
-          return '<button type="button" class="secondary" data-ed="' + name + '"' + (ok ? '' : ' disabled title="Binaire non trouvé dans le PATH"') + '>Ouvrir projet dans ' + name + '</button>';
+          return '<button type="button" class="secondary" data-ed="' + esc(name) + '"' + (ok ? '' : ' disabled title="Binaire non trouvé dans le PATH"') + '>Ouvrir projet dans ' + esc(name) + '</button>';
         }).join(' ');
         el.innerHTML =
-          '<p><strong>Fichier Continue</strong> : <code class="mono">' + st.continue_yaml + '</code> ' +
-          (st.yaml_exists ? '(présent)' : '(absent — sera créé)') + '</p>' +
-          '<p class="muted">Cible API pour Continue : <code>' + st.api_base_target + '</code> · bloc OAAS déjà présent : <strong>' + (st.has_oaas_block ? 'oui' : 'non') + '</strong></p>' +
+          '<p><strong>Écriture cible</strong> : <code class="mono">' + esc(st.write_target) + '</code> (préférence <strong>' + esc(st.preferred) + '</strong>)</p>' +
+          '<p class="muted mono">YAML : ' + esc(st.continue_yaml) + ' ' + (st.yaml_exists ? '✓' : '✗') +
+          ' · JSON : ' + esc(st.continue_json) + ' ' + (st.json_exists ? '✓' : '✗') + '</p>' +
+          '<p class="muted">Cible API pour Continue : <code>' + esc(st.api_base_target) + '</code> · bloc OAAS déjà présent : <strong>' + (st.has_oaas_block ? 'oui' : 'non') + '</strong> · sauvegarde du fichier existant : même dossier, suffixe <code>.oaas-backup.</code> + horodatage Unix.</p>' +
           '<label for="ide-model">Surcharge id modèle (optionnel)</label>' +
           '<input type="text" id="ide-model" placeholder="vide = premier modèle renvoyé par llama-server (GET /v1/models)" />' +
           '<div class="row" style="margin-top:0.75rem">' +
@@ -243,35 +375,46 @@
           '</div>' +
           '<p class="muted" style="margin-top:1rem">Ouvre le dossier du champ « projet » (répertoire uniquement, sous $HOME) :</p>' +
           '<div class="row">' + edButtons + '</div>';
-        document.getElementById('btn-apply-continue').onclick = async () => {
-          msg('Écriture en cours…');
+        const btnApply = document.getElementById('btn-apply-continue');
+        btnApply.onclick = async () => {
+          msg('Écriture en cours…', false);
+          btnApply.disabled = true;
           const model = (document.getElementById('ide-model').value || '').trim();
           const body = model ? { model } : {};
-          const pr = await fetch('/oaas/ide/apply-continue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-          const j = await pr.json().catch(() => ({}));
-          if (!pr.ok) {
-            msg((j.error && j.error.message) ? j.error.message : 'Erreur ' + pr.status);
-            return;
+          try {
+            const pr = await fetch('/oaas/ide/apply-continue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const j = await pr.json().catch(() => ({}));
+            if (!pr.ok) {
+              msg((j.error && j.error.message) ? j.error.message : 'Erreur ' + pr.status, false);
+              return;
+            }
+            msg(j.message || 'OK', true);
+            await loadIdePanel();
+          } finally {
+            btnApply.disabled = false;
           }
-          msg(j.message || 'OK');
-          loadIdePanel();
         };
         el.querySelectorAll('button[data-ed]').forEach(btn => {
           btn.onclick = async () => {
             const p = (document.getElementById('proj').value || '').trim();
-            if (!p) { msg('Indique d’abord le chemin du projet.'); return; }
-            msg('Lancement éditeur…');
-            const pr = await fetch('/oaas/ide/open-folder', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ path: p, editor: btn.getAttribute('data-ed') }),
-            });
-            const j = await pr.json().catch(() => ({}));
-            if (!pr.ok) {
-              msg((j.error && j.error.message) ? j.error.message : 'Erreur ' + pr.status);
-              return;
+            if (!p) { msg('Indique d’abord le chemin du projet.', false); return; }
+            msg('Lancement éditeur…', false);
+            btn.disabled = true;
+            try {
+              const pr = await fetch('/oaas/ide/open-folder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: p, editor: btn.getAttribute('data-ed') }),
+              });
+              const j = await pr.json().catch(() => ({}));
+              if (!pr.ok) {
+                msg((j.error && j.error.message) ? j.error.message : 'Erreur ' + pr.status, false);
+                return;
+              }
+              msg(j.message || 'OK', true);
+            } finally {
+              btn.disabled = false;
             }
-            msg(j.message || 'OK');
           };
         });
       } catch (e) {
@@ -286,10 +429,13 @@
       renderStatus(s);
       renderCatalog(c, null);
       loadIdePanel();
+      loadSystem();
+      document.getElementById('btn-system-refresh').onclick = () => loadSystem();
+      setInterval(loadSystem, 12000);
     }).catch(e => {
       document.getElementById('err').style.display = 'block';
       document.getElementById('err').textContent = 'Erreur : ' + e;
-      document.getElementById('panel-status').innerHTML = '<p class="err">Impossible de joindre OAAS. Vérifie que le serveur tourne et que tu ouvres cette page sur la même origine (même hôte/port que <code>server.bind</code>).</p>';
+      document.getElementById('statut').innerHTML = '<p class="err">Impossible de joindre OAAS. Vérifie que le serveur tourne et que tu ouvres cette page sur la même origine (même hôte/port que <code>server.bind</code>).</p>';
     });
   </script>
 </body>

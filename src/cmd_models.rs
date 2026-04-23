@@ -154,10 +154,7 @@ fn print_recommendations(catalog: &ModelsCatalogRoot) {
     );
     println!("Picks du catalogue :\n");
     for p in recommend_picks(catalog) {
-        println!(
-            "  • {} : {} — {}",
-            p.description_fr, p.model_id, p.label
-        );
+        println!("  • {} : {} — {}", p.description_fr, p.model_id, p.label);
     }
     println!("\nVoir : oaas models list | oaas models list --usage dev");
 }

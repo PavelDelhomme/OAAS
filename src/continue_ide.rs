@@ -13,9 +13,57 @@ const OAAS_MODEL_NAME: &str = "OAAS (local)";
 
 pub fn continue_global_yaml_path() -> Result<PathBuf, OaasError> {
     let home = std::env::var_os("HOME").ok_or_else(|| {
-        OaasError::Config("HOME non défini — impossible de localiser ~/.continue/config.yaml".into())
+        OaasError::Config(
+            "HOME non défini — impossible de localiser ~/.continue/config.yaml".into(),
+        )
     })?;
     Ok(PathBuf::from(home).join(".continue").join("config.yaml"))
+}
+
+pub fn continue_global_json_path() -> Result<PathBuf, OaasError> {
+    let home = std::env::var_os("HOME").ok_or_else(|| {
+        OaasError::Config(
+            "HOME non défini — impossible de localiser ~/.continue/config.json".into(),
+        )
+    })?;
+    Ok(PathBuf::from(home).join(".continue").join("config.json"))
+}
+
+/// Continue charge `config.yaml` à la place de `config.json` si les deux existent (doc amont).
+pub fn continue_resolve_write_path() -> Result<PathBuf, OaasError> {
+    let yaml = continue_global_yaml_path()?;
+    let json = continue_global_json_path()?;
+    if yaml.is_file() {
+        return Ok(yaml);
+    }
+    if json.is_file() {
+        return Ok(json);
+    }
+    Ok(yaml)
+}
+
+fn backup_existing_config(path: &Path) -> Result<(), OaasError> {
+    if !path.is_file() {
+        return Ok(());
+    }
+    let ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let name = path
+        .file_name()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| "config".into());
+    let parent = path.parent().unwrap_or(Path::new("."));
+    let bak = parent.join(format!("{name}.oaas-backup.{ts}"));
+    std::fs::copy(path, &bak).map_err(|e| {
+        OaasError::Backend(format!(
+            "sauvegarde Continue {} → {} : {e}",
+            path.display(),
+            bak.display()
+        ))
+    })?;
+    Ok(())
 }
 
 /// `api_base` doit être l’URL du **proxy OAAS** (…/v1), pas llama-server seul, pour garder LLMLingua si activé.
@@ -24,11 +72,11 @@ pub fn merge_oaas_into_continue_yaml(
     api_base: &str,
     model_id: &str,
 ) -> Result<String, OaasError> {
+    backup_existing_config(config_path)?;
     let api_base = api_base.trim_end_matches('/').to_string();
     let mut root = if config_path.is_file() {
-        let raw = std::fs::read_to_string(config_path).map_err(|e| {
-            OaasError::Backend(format!("lecture {}: {e}", config_path.display()))
-        })?;
+        let raw = std::fs::read_to_string(config_path)
+            .map_err(|e| OaasError::Backend(format!("lecture {}: {e}", config_path.display())))?;
         serde_yaml::from_str::<YamlValue>(&raw).map_err(|e| {
             OaasError::Config(format!(
                 "YAML Continue illisible ({}). Corrige le fichier ou renomme-le avant réessai : {e}",
@@ -40,7 +88,9 @@ pub fn merge_oaas_into_continue_yaml(
     };
 
     let map = root.as_mapping_mut().ok_or_else(|| {
-        OaasError::Config("Racine de config.yaml Continue doit être un objet (mapping YAML).".into())
+        OaasError::Config(
+            "Racine de config.yaml Continue doit être un objet (mapping YAML).".into(),
+        )
     })?;
 
     let name_k = YamlValue::String("name".into());
@@ -86,18 +136,95 @@ pub fn merge_oaas_into_continue_yaml(
     seq.insert(0, entry);
 
     if let Some(parent) = config_path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| {
-            OaasError::Backend(format!("mkdir {}: {e}", parent.display()))
-        })?;
+        std::fs::create_dir_all(parent)
+            .map_err(|e| OaasError::Backend(format!("mkdir {}: {e}", parent.display())))?;
     }
     let out = serde_yaml::to_string(&root)
         .map_err(|e| OaasError::Backend(format!("sérialisation YAML Continue: {e}")))?;
-    std::fs::write(config_path, &out).map_err(|e| {
-        OaasError::Backend(format!("écriture {}: {e}", config_path.display()))
-    })?;
+    std::fs::write(config_path, &out)
+        .map_err(|e| OaasError::Backend(format!("écriture {}: {e}", config_path.display())))?;
 
     Ok(format!(
-        "Bloc « {} » écrit en tête de « {} » (recharge la fenêtre Continue / VS Code si besoin).",
+        "Bloc « {} » écrit en tête de « {} » (sauvegarde .oaas-backup.* si fichier existait). Recharge la fenêtre Continue / VS Code.",
+        OAAS_MODEL_NAME,
+        config_path.display()
+    ))
+}
+
+/// Ancien format Continue (`config.json`) : fusion sur le tableau `models` (clés `title` ou `name`).
+pub fn merge_oaas_into_continue_json(
+    config_path: &Path,
+    api_base: &str,
+    model_id: &str,
+) -> Result<String, OaasError> {
+    backup_existing_config(config_path)?;
+    let api_base = api_base.trim_end_matches('/').to_string();
+    let mut root: JsonValue = if config_path.is_file() {
+        let raw = std::fs::read_to_string(config_path)
+            .map_err(|e| OaasError::Backend(format!("lecture {}: {e}", config_path.display())))?;
+        serde_json::from_str(&raw).map_err(|e| {
+            OaasError::Config(format!(
+                "JSON Continue illisible ({}): {e}",
+                config_path.display()
+            ))
+        })?
+    } else {
+        JsonValue::Object(serde_json::Map::new())
+    };
+
+    let obj = root.as_object_mut().ok_or_else(|| {
+        OaasError::Config("Racine de config.json Continue doit être un objet.".into())
+    })?;
+
+    let models = obj
+        .entry("models".to_string())
+        .or_insert_with(|| JsonValue::Array(Vec::new()));
+    let arr = models
+        .as_array_mut()
+        .ok_or_else(|| OaasError::Config("Champ « models » doit être un tableau JSON.".into()))?;
+
+    arr.retain(|item| {
+        let Some(o) = item.as_object() else {
+            return true;
+        };
+        let name_hit = o
+            .get("name")
+            .and_then(|x| x.as_str())
+            .map(|s| s == OAAS_MODEL_NAME)
+            .unwrap_or(false)
+            || o.get("title")
+                .and_then(|x| x.as_str())
+                .map(|s| s == OAAS_MODEL_NAME)
+                .unwrap_or(false);
+        let base_hit = o
+            .get("apiBase")
+            .and_then(|x| x.as_str())
+            .map(|s| s.trim_end_matches('/') == api_base)
+            .unwrap_or(false);
+        !(name_hit || base_hit)
+    });
+
+    let entry = serde_json::json!({
+        "title": OAAS_MODEL_NAME,
+        "name": OAAS_MODEL_NAME,
+        "provider": "openai",
+        "model": model_id,
+        "apiBase": &api_base,
+        "apiKey": "local",
+    });
+    arr.insert(0, entry);
+
+    if let Some(parent) = config_path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| OaasError::Backend(format!("mkdir {}: {e}", parent.display())))?;
+    }
+    let out = serde_json::to_string_pretty(&root)
+        .map_err(|e| OaasError::Backend(format!("sérialisation JSON Continue: {e}")))?;
+    std::fs::write(config_path, out.as_bytes())
+        .map_err(|e| OaasError::Backend(format!("écriture {}: {e}", config_path.display())))?;
+
+    Ok(format!(
+        "Entrée « {} » fusionnée dans « {} » (backup .oaas-backup.* si besoin).",
         OAAS_MODEL_NAME,
         config_path.display()
     ))
@@ -136,9 +263,9 @@ pub async fn fetch_first_model_id(
     client: &reqwest::Client,
     llama_upstream: &reqwest::Url,
 ) -> Result<String, OaasError> {
-    let url = llama_upstream.join("v1/models").map_err(|e| {
-        OaasError::Backend(format!("URL /v1/models upstream: {e}"))
-    })?;
+    let url = llama_upstream
+        .join("v1/models")
+        .map_err(|e| OaasError::Backend(format!("URL /v1/models upstream: {e}")))?;
     let resp = client.get(url).send().await?;
     if !resp.status().is_success() {
         return Err(OaasError::Backend(format!(
@@ -204,12 +331,12 @@ pub fn resolve_dir_under_home(path_str: &str) -> Result<PathBuf, OaasError> {
             expanded.display()
         )));
     }
-    let canon = expanded.canonicalize().map_err(|e| {
-        OaasError::Config(format!("canonicalize « {} » : {e}", expanded.display()))
-    })?;
-    let home_canon = home.canonicalize().map_err(|e| {
-        OaasError::Config(format!("canonicalize HOME : {e}"))
-    })?;
+    let canon = expanded
+        .canonicalize()
+        .map_err(|e| OaasError::Config(format!("canonicalize « {} » : {e}", expanded.display())))?;
+    let home_canon = home
+        .canonicalize()
+        .map_err(|e| OaasError::Config(format!("canonicalize HOME : {e}")))?;
     if !canon.starts_with(&home_canon) {
         return Err(OaasError::Config(
             "Pour des raisons de sécurité, seuls les dossiers sous $HOME sont acceptés.".into(),
@@ -251,25 +378,78 @@ pub async fn spawn_editor_open_folder(editor: &str, folder: &Path) -> Result<Str
 #[derive(serde::Serialize)]
 pub struct ContinueIdeStatus {
     pub continue_yaml: String,
+    pub continue_json: String,
     pub yaml_exists: bool,
+    pub json_exists: bool,
+    pub write_target: String,
+    pub preferred: String,
     pub has_oaas_block: bool,
     pub api_base_target: String,
     pub editors: BTreeMap<String, bool>,
 }
 
 pub fn build_continue_ide_status(api_base_target: &str) -> Result<ContinueIdeStatus, OaasError> {
-    let p = continue_global_yaml_path()?;
-    let yaml_exists = p.is_file();
-    let has_oaas_block = yaml_exists && continue_yaml_has_oaas_block(&p, api_base_target);
+    let py = continue_global_yaml_path()?;
+    let pj = continue_global_json_path()?;
+    let yaml_exists = py.is_file();
+    let json_exists = pj.is_file();
+    let write_target = continue_resolve_write_path()?;
+    let preferred = if yaml_exists {
+        "yaml"
+    } else if json_exists {
+        "json"
+    } else {
+        "none_yet_defaults_yaml"
+    }
+    .to_string();
+    let has_oaas_block = (yaml_exists && continue_yaml_has_oaas_block(&py, api_base_target))
+        || (json_exists && continue_json_has_oaas_block(&pj, api_base_target));
     let mut editors = BTreeMap::new();
     for (k, bin) in [("code", "code"), ("cursor", "cursor"), ("codium", "codium")] {
         editors.insert(k.to_string(), which::which(bin).is_ok());
     }
     Ok(ContinueIdeStatus {
-        continue_yaml: p.display().to_string(),
+        continue_yaml: py.display().to_string(),
+        continue_json: pj.display().to_string(),
         yaml_exists,
+        json_exists,
+        write_target: write_target.display().to_string(),
+        preferred,
         has_oaas_block,
         api_base_target: api_base_target.to_string(),
         editors,
+    })
+}
+
+pub fn continue_json_has_oaas_block(path: &Path, api_base: &str) -> bool {
+    let Ok(raw) = std::fs::read_to_string(path) else {
+        return false;
+    };
+    let Ok(v) = serde_json::from_str::<JsonValue>(&raw) else {
+        return false;
+    };
+    let Some(arr) = v.get("models").and_then(|m| m.as_array()) else {
+        return false;
+    };
+    let api_base = api_base.trim_end_matches('/');
+    arr.iter().any(|item| {
+        let Some(o) = item.as_object() else {
+            return false;
+        };
+        let name_hit = o
+            .get("name")
+            .and_then(|x| x.as_str())
+            .map(|s| s == OAAS_MODEL_NAME)
+            .unwrap_or(false)
+            || o.get("title")
+                .and_then(|x| x.as_str())
+                .map(|s| s == OAAS_MODEL_NAME)
+                .unwrap_or(false);
+        let base_hit = o
+            .get("apiBase")
+            .and_then(|x| x.as_str())
+            .map(|s| s.trim_end_matches('/') == api_base)
+            .unwrap_or(false);
+        name_hit || base_hit
     })
 }

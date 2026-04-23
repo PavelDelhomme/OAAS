@@ -17,6 +17,11 @@ pub fn run_init_config(force: bool, dest: Option<PathBuf>) -> Result<(), String>
     }
     std::fs::write(&path, EXAMPLE_YAML).map_err(|e| format!("écriture {}: {e}", path.display()))?;
     println!("Configuration créée : {}", path.display());
-    println!("Édite « profiles.default.model » avec le chemin absolu vers ton fichier .gguf puis lance : oaas serve");
+    println!(
+        "Modèle : édite « profiles.default.model » vers un .gguf existant, ou depuis le dépôt : make models-recommend puis make models-pull ID=<id>."
+    );
+    println!(
+        "Serveur : make serve (ici) ou oaas serve (après make install-user / cargo install)."
+    );
     Ok(())
 }
