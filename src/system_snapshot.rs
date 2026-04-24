@@ -305,13 +305,8 @@ fn json_as_u32(v: &serde_json::Value) -> Option<u32> {
         .map(|n| n as u32)
         .or_else(|| v.as_i64().map(|n| n as u32))
         .or_else(|| {
-            v.as_str().and_then(|s| {
-                s.trim()
-                    .replace('%', "")
-                    .trim()
-                    .parse()
-                    .ok()
-            })
+            v.as_str()
+                .and_then(|s| s.trim().replace('%', "").trim().parse().ok())
         })
 }
 
@@ -356,7 +351,10 @@ mod tests {
         assert!(name.contains("7900"));
         let util = co.get("GPU use (%)").and_then(json_as_u32);
         assert_eq!(util, Some(3));
-        let total_mb = co.get("VRAM Total Memory (B)").and_then(json_as_u64).map(|b| b / (1024 * 1024));
+        let total_mb = co
+            .get("VRAM Total Memory (B)")
+            .and_then(json_as_u64)
+            .map(|b| b / (1024 * 1024));
         assert_eq!(total_mb, Some(24576));
     }
 

@@ -135,12 +135,12 @@ pub fn run_doctor(config_path: Option<PathBuf>, profile: String, fix: bool) {
             println!("  Relance : make doctor   (le fichier a été réécrit ; les commentaires YAML ne sont pas conservés.)");
         } else {
             println!("• Aucune correction automatique appliquée (LLMLingua déjà OK ou désactivé).");
-            println!("  Les autres points (llama-server, chemin .gguf…) ne sont pas modifiés par --fix.");
+            println!(
+                "  Les autres points (llama-server, chemin .gguf…) ne sont pas modifiés par --fix."
+            );
         }
     } else if pc_broken {
-        println!(
-            "\n→ Correction automatique :   cargo run -- doctor --fix   ou   make doctor-fix"
-        );
+        println!("\n→ Correction automatique :   cargo run -- doctor --fix   ou   make doctor-fix");
     }
 
     println!(

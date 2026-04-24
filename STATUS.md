@@ -1,6 +1,7 @@
 # OAAS — suivi projet (STATUS)
 
-Document **vivant** : objectifs finaux, état réel des fonctionnalités, tests à faire, backlog ordonné. À mettre à jour quand une ligne change d’état.
+Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci‑dessous).  
+**Checklist courte** : [TODOS.md](TODOS.md) · **backlog détaillé + investigations** (ex. Ollama qui redémarre seul) : [BACKLOG.md](BACKLOG.md) · **usage** : [README.md](README.md).
 
 ---
 
@@ -47,33 +48,12 @@ Document **vivant** : objectifs finaux, état réel des fonctionnalités, tests 
 
 ---
 
-## Backlog ordonné (concret)
-
-### Court terme
-
-1. Ajuster parse **ROCm** selon retours terrain (exemples JSON `rocm-smi` 5.x / 6.x).
-2. Option **workspace** `.continue/config.yaml` (en plus du global).
-3. ~~**Tests d’intégration** minimaux~~ → **tests unitaires** dans `system_snapshot` + `project_status` (`cargo test`) ; tests E2E / fichiers temporaires encore ouverts si besoin.
-
-### Moyen terme
-
-4. **RAG** : embeddings + index sur `XDG_DATA_HOME/oaas/docs` + route ou worker.
-5. **systemd** : unité `oaas.service` exemple dans `scripts/` + doc.
-6. Reprise / miroirs pour **gros** `models pull`.
-
-### Plus tard
-
-7. Client Tauri ou GTK **optionnel** (même JSON qu’aujourd’hui).
-8. Métriques **Intel GPU** / **Mesa** si besoin.
-
----
-
 ## Historique des décisions utiles
 
 - **API Continue** = URL du **proxy OAAS** (`…/v1`), pas le port interne llama seul → LLMLingua reste dans la boucle.
 - **CPU par cœur** : deux lectures `/proc/stat` espacées de ~200 ms → pourcentage approximatif (suffisant pour un tableau de bord ; pas un profiler).
-- **STATUS.md** : suivi produit ; **README.md** : usage et références techniques.
+- **Rôles des fichiers** : **STATUS** = vision + état ; **TODOS** = cases à cocher ; **BACKLOG** = détail, investigations, historique de livraison ; **README** = installation et commandes.
 
 ---
 
-*Dernière mise à jour : tests `cargo test` (parse ROCm-like + `/proc` + `classify_exe`), correctif `json_as_u32` pour chaînes « 12 % ».*
+*Dernière mise à jour : introduction des fichiers [TODOS.md](TODOS.md) et [BACKLOG.md](BACKLOG.md) ; investigation documentée « Ollama intempestif ».*

@@ -188,6 +188,8 @@ install: release
 	install -m644 data/docs_catalog.yaml "$(DATADIR)/data/docs_catalog.yaml"
 	install -m644 static/oaas_ui.html "$(DATADIR)/static/oaas_ui.html"
 	install -m644 STATUS.md "$(DATADIR)/STATUS.md"
+	install -m644 BACKLOG.md "$(DATADIR)/BACKLOG.md"
+	install -m644 TODOS.md "$(DATADIR)/TODOS.md"
 	@echo "Installé : $(BINDIR)/oaas"
 	@echo "Exemple YAML : $(DATADIR)/config.example.yaml"
 	@echo "Si besoin : sudo make install PREFIX=$(PREFIX)"
@@ -204,13 +206,15 @@ install-user: release
 	install -m644 data/docs_catalog.yaml "$$h/.local/share/oaas/data/docs_catalog.yaml"; \
 	install -m644 static/oaas_ui.html "$$h/.local/share/oaas/static/oaas_ui.html"; \
 	install -m644 STATUS.md "$$h/.local/share/oaas/STATUS.md"; \
+	install -m644 BACKLOG.md "$$h/.local/share/oaas/BACKLOG.md"; \
+	install -m644 TODOS.md "$$h/.local/share/oaas/TODOS.md"; \
 	echo "Installé : $$h/.local/bin/oaas"; \
 	echo "Ajoute $$h/.local/bin au PATH si besoin."
 
 uninstall-user:
 	@set -e; h="$${HOME}"; \
 	rm -f "$$h/.local/bin/oaas"; \
-	rm -f "$$h/.local/share/oaas/STATUS.md"; \
+	rm -f "$$h/.local/share/oaas/STATUS.md" "$$h/.local/share/oaas/BACKLOG.md" "$$h/.local/share/oaas/TODOS.md"; \
 	rm -f "$$h/.local/share/oaas/config.example.yaml"; \
 	rm -f "$$h/.local/share/oaas/scripts/oaas_llmlingua_worker.py" "$$h/.local/share/oaas/scripts/requirements-llmlingua.txt"; \
 	rm -f "$$h/.local/share/oaas/data/models_catalog.yaml" "$$h/.local/share/oaas/data/docs_catalog.yaml"; \
@@ -221,7 +225,7 @@ uninstall-user:
 
 uninstall:
 	rm -f "$(BINDIR)/oaas"
-	rm -f "$(DATADIR)/STATUS.md"
+	rm -f "$(DATADIR)/STATUS.md" "$(DATADIR)/BACKLOG.md" "$(DATADIR)/TODOS.md"
 	rm -f "$(DATADIR)/config.example.yaml"
 	rm -f "$(DATADIR)/scripts/oaas_llmlingua_worker.py" "$(DATADIR)/scripts/requirements-llmlingua.txt"
 	rm -f "$(DATADIR)/data/models_catalog.yaml" "$(DATADIR)/data/docs_catalog.yaml"
@@ -241,5 +245,7 @@ dist: release
 	@install -m644 data/docs_catalog.yaml "target/$(DISTNAME)/data/docs_catalog.yaml"
 	@install -m644 static/oaas_ui.html "target/$(DISTNAME)/static/oaas_ui.html"
 	@install -m644 STATUS.md "target/$(DISTNAME)/STATUS.md"
+	@install -m644 BACKLOG.md "target/$(DISTNAME)/BACKLOG.md"
+	@install -m644 TODOS.md "target/$(DISTNAME)/TODOS.md"
 	@tar -C target -czf "target/$(DISTNAME).tar.gz" "$(DISTNAME)"
 	@echo "Archive : target/$(DISTNAME).tar.gz"

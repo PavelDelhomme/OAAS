@@ -112,7 +112,11 @@ async fn main() {
 
 async fn run_cli(cli: Cli) -> Result<(), OaasError> {
     match cli.command {
-        Commands::Doctor { config, profile, fix } => {
+        Commands::Doctor {
+            config,
+            profile,
+            fix,
+        } => {
             crate::doctor::run_doctor(config, profile, fix);
             Ok(())
         }

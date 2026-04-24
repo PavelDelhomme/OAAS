@@ -279,7 +279,10 @@ mod tests {
             classify_exe(Path::new("/home/u/proj/target/release/oaas")),
             "release"
         );
-        assert_eq!(classify_exe(Path::new("/usr/local/bin/oaas")), "installed_or_other");
+        assert_eq!(
+            classify_exe(Path::new("/usr/local/bin/oaas")),
+            "installed_or_other"
+        );
     }
 
     #[test]

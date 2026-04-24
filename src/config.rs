@@ -171,9 +171,9 @@ pub fn patch_prompt_compression_enabled(
     let mut v: serde_yaml::Value = serde_yaml::from_str(&raw).map_err(|e| {
         OaasError::Config(format!("YAML invalide dans {}: {e}", config_path.display()))
     })?;
-    let root = v.as_mapping_mut().ok_or_else(|| {
-        OaasError::Config("racine YAML : attendu un mapping".into())
-    })?;
+    let root = v
+        .as_mapping_mut()
+        .ok_or_else(|| OaasError::Config("racine YAML : attendu un mapping".into()))?;
     let pc_key = serde_yaml::Value::String("prompt_compression".into());
     if !root.contains_key(&pc_key) {
         root.insert(
@@ -181,12 +181,12 @@ pub fn patch_prompt_compression_enabled(
             serde_yaml::Value::Mapping(serde_yaml::Mapping::new()),
         );
     }
-    let pc_node = root.get_mut(&pc_key).ok_or_else(|| {
-        OaasError::Config("prompt_compression : entrée YAML introuvable".into())
-    })?;
-    let m = pc_node.as_mapping_mut().ok_or_else(|| {
-        OaasError::Config("prompt_compression : attendu un mapping YAML".into())
-    })?;
+    let pc_node = root
+        .get_mut(&pc_key)
+        .ok_or_else(|| OaasError::Config("prompt_compression : entrée YAML introuvable".into()))?;
+    let m = pc_node
+        .as_mapping_mut()
+        .ok_or_else(|| OaasError::Config("prompt_compression : attendu un mapping YAML".into()))?;
     m.insert(
         serde_yaml::Value::String("enabled".into()),
         serde_yaml::Value::Bool(enabled),

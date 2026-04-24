@@ -20,8 +20,6 @@ pub fn run_init_config(force: bool, dest: Option<PathBuf>) -> Result<(), String>
     println!(
         "Modèle : édite « profiles.default.model » vers un .gguf existant, ou depuis le dépôt : make models-recommend puis make models-pull ID=<id>."
     );
-    println!(
-        "Serveur : make serve (ici) ou oaas serve (après make install-user / cargo install)."
-    );
+    println!("Serveur : make serve (ici) ou oaas serve (après make install-user / cargo install).");
     Ok(())
 }
