@@ -184,6 +184,7 @@ install: release
 	install -m644 config.example.yaml "$(DATADIR)/config.example.yaml"
 	install -m755 scripts/oaas_llmlingua_worker.py "$(DATADIR)/scripts/oaas_llmlingua_worker.py"
 	install -m644 scripts/requirements-llmlingua.txt "$(DATADIR)/scripts/requirements-llmlingua.txt"
+	install -m644 scripts/oaas.service.example "$(DATADIR)/scripts/oaas.service.example"
 	install -m644 data/models_catalog.yaml "$(DATADIR)/data/models_catalog.yaml"
 	install -m644 data/docs_catalog.yaml "$(DATADIR)/data/docs_catalog.yaml"
 	install -m644 static/oaas_ui.html "$(DATADIR)/static/oaas_ui.html"
@@ -201,6 +202,7 @@ install-user: release
 	install -m644 config.example.yaml "$$h/.local/share/oaas/config.example.yaml"; \
 	install -m755 scripts/oaas_llmlingua_worker.py "$$h/.local/share/oaas/scripts/oaas_llmlingua_worker.py"; \
 	install -m644 scripts/requirements-llmlingua.txt "$$h/.local/share/oaas/scripts/requirements-llmlingua.txt"; \
+	install -m644 scripts/oaas.service.example "$$h/.local/share/oaas/scripts/oaas.service.example"; \
 	mkdir -p "$$h/.local/share/oaas/data" "$$h/.local/share/oaas/static"; \
 	install -m644 data/models_catalog.yaml "$$h/.local/share/oaas/data/models_catalog.yaml"; \
 	install -m644 data/docs_catalog.yaml "$$h/.local/share/oaas/data/docs_catalog.yaml"; \
@@ -216,7 +218,7 @@ uninstall-user:
 	rm -f "$$h/.local/bin/oaas"; \
 	rm -f "$$h/.local/share/oaas/STATUS.md" "$$h/.local/share/oaas/BACKLOG.md" "$$h/.local/share/oaas/TODOS.md"; \
 	rm -f "$$h/.local/share/oaas/config.example.yaml"; \
-	rm -f "$$h/.local/share/oaas/scripts/oaas_llmlingua_worker.py" "$$h/.local/share/oaas/scripts/requirements-llmlingua.txt"; \
+	rm -f "$$h/.local/share/oaas/scripts/oaas_llmlingua_worker.py" "$$h/.local/share/oaas/scripts/requirements-llmlingua.txt" "$$h/.local/share/oaas/scripts/oaas.service.example"; \
 	rm -f "$$h/.local/share/oaas/data/models_catalog.yaml" "$$h/.local/share/oaas/data/docs_catalog.yaml"; \
 	rm -f "$$h/.local/share/oaas/static/oaas_ui.html"; \
 	rmdir "$$h/.local/share/oaas/scripts" "$$h/.local/share/oaas/data" "$$h/.local/share/oaas/static" 2>/dev/null || true; \
@@ -227,7 +229,7 @@ uninstall:
 	rm -f "$(BINDIR)/oaas"
 	rm -f "$(DATADIR)/STATUS.md" "$(DATADIR)/BACKLOG.md" "$(DATADIR)/TODOS.md"
 	rm -f "$(DATADIR)/config.example.yaml"
-	rm -f "$(DATADIR)/scripts/oaas_llmlingua_worker.py" "$(DATADIR)/scripts/requirements-llmlingua.txt"
+	rm -f "$(DATADIR)/scripts/oaas_llmlingua_worker.py" "$(DATADIR)/scripts/requirements-llmlingua.txt" "$(DATADIR)/scripts/oaas.service.example"
 	rm -f "$(DATADIR)/data/models_catalog.yaml" "$(DATADIR)/data/docs_catalog.yaml"
 	rm -f "$(DATADIR)/static/oaas_ui.html"
 	-rmdir "$(DATADIR)/scripts" "$(DATADIR)/data" "$(DATADIR)/static" 2>/dev/null || true
@@ -240,6 +242,7 @@ dist: release
 	@install -m644 config.example.yaml "target/$(DISTNAME)/config.example.yaml"
 	@install -m755 scripts/oaas_llmlingua_worker.py "target/$(DISTNAME)/scripts/oaas_llmlingua_worker.py"
 	@install -m644 scripts/requirements-llmlingua.txt "target/$(DISTNAME)/scripts/requirements-llmlingua.txt"
+	@install -m644 scripts/oaas.service.example "target/$(DISTNAME)/scripts/oaas.service.example"
 	@mkdir -p "target/$(DISTNAME)/data" "target/$(DISTNAME)/static"
 	@install -m644 data/models_catalog.yaml "target/$(DISTNAME)/data/models_catalog.yaml"
 	@install -m644 data/docs_catalog.yaml "target/$(DISTNAME)/data/docs_catalog.yaml"

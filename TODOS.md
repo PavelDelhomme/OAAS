@@ -27,6 +27,6 @@ Liste **actionnable** au jour le jour. Le détail et les investigations : **[BAC
 ## Développement (extraits du backlog)
 
 - [ ] Parse ROCm : exemples JSON terrain 5.x / 6.x.
-- [ ] Workspace `.continue/config.yaml`.
+- [x] Workspace `.continue/config.yaml` (API + UI champ projet).
 - [ ] RAG + index doc (moyen terme).
-- [ ] Exemple `oaas.service` + doc systemd.
+- [x] Exemple `oaas.service` + doc systemd (`scripts/oaas.service.example`).

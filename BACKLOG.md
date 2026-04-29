@@ -37,13 +37,13 @@ Pour une **checklist courte** au quotidien, voir **[TODOS.md](TODOS.md)**.
 ### Court terme
 
 1. Ajuster parse **ROCm** selon retours terrain (exemples JSON `rocm-smi` 5.x / 6.x).
-2. Option **workspace** `.continue/config.yaml` (en plus du global `~/.continue/…`).
+2. ~~Option **workspace** `.continue/config.yaml`~~ → **Fait** : query `workspace`, POST, UI champ projet.
 3. Tests **E2E** ou fichiers temporaires si besoin (complément aux tests unitaires `cargo test` déjà en place).
 
 ### Moyen terme
 
 4. **RAG** : embeddings + index sur `XDG_DATA_HOME/oaas/docs` + route ou worker.
-5. **systemd** : unité `oaas.service` exemple dans `scripts/` + doc.
+5. ~~**systemd** : unité exemple~~ → **Fait** : `scripts/oaas.service.example` + README ; affiner variables / chemins selon retours.
 6. Reprise / miroirs pour **gros** `models pull`.
 
 ### Plus tard
@@ -57,6 +57,6 @@ Pour une **checklist courte** au quotidien, voir **[TODOS.md](TODOS.md)**.
 
 | Période | Livré |
 |---------|--------|
-| Récent | `make stop` / `stop-ollama` / `stop-all`, `doctor --fix`, cibles `models-*`, correctif noms GGUF Qwen3.5, tests `cargo test` + fix `json_as_u32` « N % », doc Makefile / README. |
+| Récent | Continue **workspace** (`?workspace=`, POST, UI), `scripts/oaas.service.example`, `make stop` / `doctor --fix` / `models-*`, tests `cargo test`, doc. |
 
 *(Détail produit « état par domaine » : toujours dans STATUS.md.)*

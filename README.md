@@ -107,9 +107,18 @@ Après `make install`, le catalogue embarqué est lu depuis `../share/oaas/data/
 
 - **API base** : `http://127.0.0.1:11435/v1` (selon `server.bind`).
 - **Modèle** : exposé par llama-server (`GET /v1/models`).
-- **Fichiers** : si `~/.continue/config.yaml` existe, il est prioritaire sur `config.json` (comportement Continue amont). Sinon OAAS fusionne dans **`config.json`** (format ancien).
+- **Global** : si `~/.continue/config.yaml` existe, il est prioritaire sur `config.json` (comportement Continue amont). Sinon OAAS peut créer / fusionner dans **`config.json`** (format ancien).
+- **Workspace** : si tu renseignes le champ **projet** sur `/oaas/` (répertoire sous `$HOME`), la fusion et le statut Continue visent **`<projet>/.continue/config.yaml`** (ou `.json`). API : `GET /oaas/ide/continue-status?workspace=~/chemin` et `POST /oaas/ide/apply-continue` avec `{ "workspace": "~/chemin" }` (en complément de `model` optionnel).
 - **Sauvegarde** : avant chaque fusion, copie du fichier existant dans le même dossier avec suffixe `.oaas-backup.<timestamp_unix>`.
 - **Config auto** : bloc **Continue + éditeur** sur `/oaas/` ou `POST /oaas/ide/apply-continue`.
+
+## systemd (optionnel)
+
+Après `make install-user`, voir **`scripts/oaas.service.example`** (copie aussi sous `~/.local/share/oaas/scripts/`). Copie vers `~/.config/systemd/user/oaas.service`, adapte `ExecStart` ou `Environment=OAAS_PROFILE=…` si besoin, puis :
+
+`systemctl --user daemon-reload` · `systemctl --user enable --now oaas`
+
+Instructions détaillées en tête du fichier `.example`.
 
 ## Observabilité
 

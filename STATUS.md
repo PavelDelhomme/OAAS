@@ -29,9 +29,10 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 | Métriques `/oaas/system.json` | **OK (Linux)** | Charge, RAM, RSS, **CPU par cœur**, `nvidia-smi`, `rocm-smi --json`. |
 | Continue YAML | **OK** | Fusion + backup + détection bloc OAAS. |
 | Continue JSON (ancien) | **OK** | Si seul `config.json` ou YAML absent ; fusion + backup. |
+| Continue **workspace** | **OK** | `GET /oaas/ide/continue-status?workspace=…` + POST `workspace` ; UI : champ **projet** → `<projet>/.continue/…`. |
 | ROCm parsing | **Partiel** | Dépend des clés JSON de ta version ROCm ; ajuster si besoin. |
 | RAG / embeddings | **Absent** | Prévu. |
-| Service systemd | **Absent** | Redémarrage = Ctrl+C + `make serve` (documenté). |
+| Service systemd | **Partiel** | Exemple `scripts/oaas.service.example` (user unit) + README ; pas d’unité imposée par le dépôt. |
 
 ---
 
@@ -56,4 +57,4 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 
 ---
 
-*Dernière mise à jour : introduction des fichiers [TODOS.md](TODOS.md) et [BACKLOG.md](BACKLOG.md) ; investigation documentée « Ollama intempestif ».*
+*Dernière mise à jour : Continue workspace (`?workspace=` / champ projet), exemple systemd `scripts/oaas.service.example`.*

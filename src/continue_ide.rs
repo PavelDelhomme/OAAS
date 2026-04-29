@@ -11,35 +11,51 @@ use crate::error::OaasError;
 
 const OAAS_MODEL_NAME: &str = "OAAS (local)";
 
-pub fn continue_global_yaml_path() -> Result<PathBuf, OaasError> {
+/// Dossier global `~/.continue`.
+pub fn continue_global_dir() -> Result<PathBuf, OaasError> {
     let home = std::env::var_os("HOME").ok_or_else(|| {
-        OaasError::Config(
-            "HOME non défini — impossible de localiser ~/.continue/config.yaml".into(),
-        )
+        OaasError::Config("HOME non défini — impossible de localiser ~/.continue".into())
     })?;
-    Ok(PathBuf::from(home).join(".continue").join("config.yaml"))
+    Ok(PathBuf::from(home).join(".continue"))
+}
+
+pub fn continue_global_yaml_path() -> Result<PathBuf, OaasError> {
+    Ok(continue_global_dir()?.join("config.yaml"))
 }
 
 pub fn continue_global_json_path() -> Result<PathBuf, OaasError> {
-    let home = std::env::var_os("HOME").ok_or_else(|| {
-        OaasError::Config(
-            "HOME non défini — impossible de localiser ~/.continue/config.json".into(),
-        )
-    })?;
-    Ok(PathBuf::from(home).join(".continue").join("config.json"))
+    Ok(continue_global_dir()?.join("config.json"))
+}
+
+/// `…/projet/.continue` (config Continue **par workspace**).
+pub fn workspace_continue_dir(workspace_root: &Path) -> PathBuf {
+    workspace_root.join(".continue")
+}
+
+/// Règle Continue amont : si `config.yaml` et `config.json` existent, le YAML est prioritaire pour l’écriture cible.
+pub fn pick_continue_config_path(continue_dir: &Path) -> PathBuf {
+    let yaml = continue_dir.join("config.yaml");
+    let json = continue_dir.join("config.json");
+    if yaml.is_file() {
+        yaml
+    } else if json.is_file() {
+        json
+    } else {
+        yaml
+    }
 }
 
 /// Continue charge `config.yaml` à la place de `config.json` si les deux existent (doc amont).
 pub fn continue_resolve_write_path() -> Result<PathBuf, OaasError> {
-    let yaml = continue_global_yaml_path()?;
-    let json = continue_global_json_path()?;
-    if yaml.is_file() {
-        return Ok(yaml);
+    Ok(pick_continue_config_path(&continue_global_dir()?))
+}
+
+/// Fichier à fusionner : global `~/.continue` ou `<workspace>/.continue` si `workspace_root` est fourni.
+pub fn resolve_continue_write_path(workspace_root: Option<&Path>) -> Result<PathBuf, OaasError> {
+    match workspace_root {
+        Some(w) => Ok(pick_continue_config_path(&workspace_continue_dir(w))),
+        None => continue_resolve_write_path(),
     }
-    if json.is_file() {
-        return Ok(json);
-    }
-    Ok(yaml)
 }
 
 fn backup_existing_config(path: &Path) -> Result<(), OaasError> {
@@ -377,6 +393,14 @@ pub async fn spawn_editor_open_folder(editor: &str, folder: &Path) -> Result<Str
 /// Réponse JSON pour `GET /oaas/ide/continue-status`.
 #[derive(serde::Serialize)]
 pub struct ContinueIdeStatus {
+    /// `global` ou `workspace` (écriture / chemins affichés ci‑dessous).
+    pub active_scope: String,
+    /// Racine du projet si paramètre `workspace` fourni (GET ou POST).
+    pub workspace_root: Option<String>,
+    /// Toujours les chemins **globaux** `~/.continue/…` (référence).
+    pub global_continue_yaml: String,
+    pub global_continue_json: String,
+    /// Chemins du périmètre actif : globaux **ou** `<workspace>/.continue/…`.
     pub continue_yaml: String,
     pub continue_json: String,
     pub yaml_exists: bool,
@@ -388,27 +412,80 @@ pub struct ContinueIdeStatus {
     pub editors: BTreeMap<String, bool>,
 }
 
-pub fn build_continue_ide_status(api_base_target: &str) -> Result<ContinueIdeStatus, OaasError> {
-    let py = continue_global_yaml_path()?;
-    let pj = continue_global_json_path()?;
-    let yaml_exists = py.is_file();
-    let json_exists = pj.is_file();
-    let write_target = continue_resolve_write_path()?;
-    let preferred = if yaml_exists {
-        "yaml"
-    } else if json_exists {
-        "json"
-    } else {
-        "none_yet_defaults_yaml"
-    }
-    .to_string();
-    let has_oaas_block = (yaml_exists && continue_yaml_has_oaas_block(&py, api_base_target))
-        || (json_exists && continue_json_has_oaas_block(&pj, api_base_target));
+pub fn build_continue_ide_status(
+    api_base_target: &str,
+    workspace_root: Option<&Path>,
+) -> Result<ContinueIdeStatus, OaasError> {
+    let g_py = continue_global_yaml_path()?;
+    let g_pj = continue_global_json_path()?;
+    let global_continue_yaml = g_py.display().to_string();
+    let global_continue_json = g_pj.display().to_string();
+
+    let (active_scope, py, pj, yaml_exists, json_exists, write_target, preferred, has_oaas_block) =
+        if let Some(ws) = workspace_root {
+            let d = workspace_continue_dir(ws);
+            let wy = d.join("config.yaml");
+            let wj = d.join("config.json");
+            let yaml_exists = wy.is_file();
+            let json_exists = wj.is_file();
+            let write_target = pick_continue_config_path(&d);
+            let preferred = if yaml_exists {
+                "yaml"
+            } else if json_exists {
+                "json"
+            } else {
+                "none_yet_defaults_yaml"
+            }
+            .to_string();
+            let has_oaas_block = (yaml_exists
+                && continue_yaml_has_oaas_block(&wy, api_base_target))
+                || (json_exists && continue_json_has_oaas_block(&wj, api_base_target));
+            (
+                "workspace",
+                wy,
+                wj,
+                yaml_exists,
+                json_exists,
+                write_target,
+                preferred,
+                has_oaas_block,
+            )
+        } else {
+            let yaml_exists = g_py.is_file();
+            let json_exists = g_pj.is_file();
+            let write_target = continue_resolve_write_path()?;
+            let preferred = if yaml_exists {
+                "yaml"
+            } else if json_exists {
+                "json"
+            } else {
+                "none_yet_defaults_yaml"
+            }
+            .to_string();
+            let has_oaas_block = (yaml_exists
+                && continue_yaml_has_oaas_block(&g_py, api_base_target))
+                || (json_exists && continue_json_has_oaas_block(&g_pj, api_base_target));
+            (
+                "global",
+                g_py,
+                g_pj,
+                yaml_exists,
+                json_exists,
+                write_target,
+                preferred,
+                has_oaas_block,
+            )
+        };
+
     let mut editors = BTreeMap::new();
     for (k, bin) in [("code", "code"), ("cursor", "cursor"), ("codium", "codium")] {
         editors.insert(k.to_string(), which::which(bin).is_ok());
     }
     Ok(ContinueIdeStatus {
+        active_scope: active_scope.to_string(),
+        workspace_root: workspace_root.map(|p| p.display().to_string()),
+        global_continue_yaml,
+        global_continue_json,
         continue_yaml: py.display().to_string(),
         continue_json: pj.display().to_string(),
         yaml_exists,

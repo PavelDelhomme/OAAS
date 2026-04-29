@@ -131,7 +131,7 @@
     </div>
 
     <h2 class="anchor" id="ide">Continue + éditeur (Code OSS, Cursor, VSCodium)</h2>
-    <p class="muted">OAAS peut <strong>écrire</strong> le bloc modèle dans <code>~/.continue/config.yaml</code> (format <a href="https://docs.continue.dev/reference" target="_blank" rel="noopener">Continue YAML</a>) et <strong>lancer</strong> ton éditeur sur le dossier projet (chemin ci-dessus, sous <code>$HOME</code> uniquement). Ce n’est pas un clone de Cursor : c’est le pont pratique vers l’extension Continue déjà installée.</p>
+    <p class="muted">OAAS peut <strong>écrire</strong> le bloc modèle dans <code>~/.continue/config.yaml</code> (global) ou dans <code>&lt;projet&gt;/.continue/config.yaml</code> si le champ <strong>projet</strong> ci‑dessous est rempli — même logique que Continue (YAML prioritaire sur JSON). <strong>Lancer</strong> l’éditeur utilise ce même chemin (sous <code>$HOME</code> uniquement). Ce n’est pas un clone de Cursor : pont vers l’extension Continue.</p>
     <div class="card" id="panel-ide">
       <p class="muted">Chargement <code>/oaas/ide/continue-status</code>…</p>
     </div>
@@ -340,6 +340,7 @@
     }
     proj.addEventListener('change', saveProj);
     proj.addEventListener('input', saveProj);
+    proj.addEventListener('change', () => { loadIdePanel(); });
 
     async function showIdeError(msg) {
       const el = document.getElementById('panel-ide');
@@ -355,7 +356,10 @@
         n.style.minHeight = '1.25rem';
       };
       try {
-        const r = await fetch('/oaas/ide/continue-status');
+        const pw = (document.getElementById('proj').value || '').trim();
+        let statusUrl = '/oaas/ide/continue-status';
+        if (pw) statusUrl += '?' + new URLSearchParams({ workspace: pw }).toString();
+        const r = await fetch(statusUrl);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const st = await r.json();
         const ed = st.editors || {};
@@ -364,8 +368,11 @@
           return '<button type="button" class="secondary" data-ed="' + esc(name) + '"' + (ok ? '' : ' disabled title="Binaire non trouvé dans le PATH"') + '>Ouvrir projet dans ' + esc(name) + '</button>';
         }).join(' ');
         el.innerHTML =
+          '<p><strong>Périmètre Continue</strong> : <code>' + esc(st.active_scope || 'global') + '</code>' +
+          (st.workspace_root ? ' · racine <code class="mono">' + esc(st.workspace_root) + '</code>' : '') + '</p>' +
+          '<p class="muted mono">Réf. global : YAML <code>' + esc(st.global_continue_yaml || st.continue_yaml) + '</code> · JSON <code>' + esc(st.global_continue_json || st.continue_json) + '</code></p>' +
           '<p><strong>Écriture cible</strong> : <code class="mono">' + esc(st.write_target) + '</code> (préférence <strong>' + esc(st.preferred) + '</strong>)</p>' +
-          '<p class="muted mono">YAML : ' + esc(st.continue_yaml) + ' ' + (st.yaml_exists ? '✓' : '✗') +
+          '<p class="muted mono">Actif — YAML : ' + esc(st.continue_yaml) + ' ' + (st.yaml_exists ? '✓' : '✗') +
           ' · JSON : ' + esc(st.continue_json) + ' ' + (st.json_exists ? '✓' : '✗') + '</p>' +
           '<p class="muted">Cible API pour Continue : <code>' + esc(st.api_base_target) + '</code> · bloc OAAS déjà présent : <strong>' + (st.has_oaas_block ? 'oui' : 'non') + '</strong> · sauvegarde du fichier existant : même dossier, suffixe <code>.oaas-backup.</code> + horodatage Unix.</p>' +
           '<label for="ide-model">Surcharge id modèle (optionnel)</label>' +
@@ -380,7 +387,10 @@
           msg('Écriture en cours…', false);
           btnApply.disabled = true;
           const model = (document.getElementById('ide-model').value || '').trim();
-          const body = model ? { model } : {};
+          const pwa = (document.getElementById('proj').value || '').trim();
+          const body = {};
+          if (model) body.model = model;
+          if (pwa) body.workspace = pwa;
           try {
             const pr = await fetch('/oaas/ide/apply-continue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             const j = await pr.json().catch(() => ({}));

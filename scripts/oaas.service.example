@@ -1,0 +1,30 @@
+# Exemple d'unité systemd *utilisateur* pour lancer OAAS au démarrage de session.
+#
+# 1. Prérequis : `make install-user` (binaire dans ~/.local/bin/oaas) et config valide
+#    dans ~/.config/oaas/config.yaml
+# 2. Copie ce fichier (sans .example) :
+#        mkdir -p ~/.config/systemd/user
+#        cp /chemin/vers/oaas.service.example ~/.config/systemd/user/oaas.service
+# 3. Adapte ExecStart si ton binaire ou ton profil diffère (voir commentaires)
+# 4. systemctl --user daemon-reload
+#    systemctl --user enable --now oaas
+# 5. Vérif : systemctl --user status oaas
+#
+# Profil YAML autre que default : ajoute p.ex.
+#   Environment=OAAS_PROFILE=dev
+# dans la section [Service]
+
+[Unit]
+Description=OAAS — orchestrateur LLM local (API OpenAI-compatible)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/oaas serve
+Restart=on-failure
+RestartSec=5
+Environment=RUST_LOG=warn
+
+[Install]
+WantedBy=default.target
