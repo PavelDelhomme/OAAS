@@ -21,7 +21,7 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 | Domaine | État | Détail |
 |--------|------|--------|
 | Proxy `/v1/*` | **OK** | Chat, models, streaming ; LLMLingua optionnel. |
-| Catalogue modèles + `pull` | **OK** | YAML + CLI + UI. |
+| Catalogue modèles + `pull` | **OK** | YAML + CLI + UI ; reprise téléchargement via `.part` + `Range`. |
 | Docs `oaas docs` | **Partiel** | git/fetch/devdocs-notes ; pas de RAG. |
 | UI `/oaas/` | **OK** | Statut, catalogue, IDE, système, navigation. |
 | `oaas status` / `make status` | **OK** | Config, GGUF, TCP, HTTP `/oaas/`, Continue, binaire courant ; `--ci` = fmt+clippy+build. |
@@ -57,4 +57,4 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 
 ---
 
-*Dernière mise à jour : Continue workspace (`?workspace=` / champ projet), exemple systemd `scripts/oaas.service.example`.*
+*Dernière mise à jour : `models pull` reprise via `.part` + en-tête HTTP `Range`.*

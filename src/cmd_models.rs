@@ -83,7 +83,7 @@ pub async fn run_models(cmd: ModelsCommand) -> Result<(), OaasError> {
                 info!(path = %dest.display(), "fichier déjà présent (utilise --force pour retélécharger)");
             } else {
                 let url = m.huggingface_download_url();
-                info!(%url, dest = %dest.display(), "téléchargement");
+                info!(%url, dest = %dest.display(), "téléchargement (reprise si fichier .part déjà présent)");
                 let client = build_client()?;
                 download_url_to_file(&client, &url, &dest).await?;
                 info!(path = %dest.display(), "téléchargement terminé");

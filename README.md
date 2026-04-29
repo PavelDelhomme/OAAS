@@ -94,6 +94,8 @@ Voir **`oaas models recommend`**.
 
 Après `make install`, le catalogue embarqué est lu depuis `../share/oaas/data/` relatif au binaire.
 
+**Gros GGUF** : `oaas models pull` écrit d’abord un fichier `*.part` puis renomme ; si le téléchargement est interrompu, **relancer la même commande** reprend via l’en-tête HTTP `Range` (tant que le `.part` est intact).
+
 ---
 
 ## Prérequis

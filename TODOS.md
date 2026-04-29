@@ -30,3 +30,4 @@ Liste **actionnable** au jour le jour. Le détail et les investigations : **[BAC
 - [x] Workspace `.continue/config.yaml` (API + UI champ projet).
 - [ ] RAG + index doc (moyen terme).
 - [x] Exemple `oaas.service` + doc systemd (`scripts/oaas.service.example`).
+- [x] `models pull` : reprise sur fichier `.part` (HTTP `Range`).

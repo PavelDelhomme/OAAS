@@ -44,7 +44,7 @@ Pour une **checklist courte** au quotidien, voir **[TODOS.md](TODOS.md)**.
 
 4. **RAG** : embeddings + index sur `XDG_DATA_HOME/oaas/docs` + route ou worker.
 5. ~~**systemd** : unité exemple~~ → **Fait** : `scripts/oaas.service.example` + README ; affiner variables / chemins selon retours.
-6. Reprise / miroirs pour **gros** `models pull`.
+6. ~~Reprise~~ pour **gros** `models pull` : **fait** (fichier `.part` + `Range` HTTP) ; miroirs URL encore ouverts si besoin.
 
 ### Plus tard
 
