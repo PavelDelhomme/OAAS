@@ -1,5 +1,7 @@
 # OAAS
 
+**OAAS** signifie **Own AI Agents System** : c’est le nom du composant **orchestrateur** dans l’écosystème **OwnAiAgentsSystem** (ton dossier parent). En pratique, c’est un serveur local qui enchaîne **llama.cpp**, proxy HTTP et UI — pas un « cloud » ni Ollama.
+
 Orchestrateur **local** pour faire tourner des LLM avec **llama.cpp** (`llama-server`), une API **compatible OpenAI** (`/v1/chat/completions`, etc.) pour **Continue**, Emacs, Neovim, etc.
 
 **Ce projet ne dépend pas d’Ollama.** Tu peux arrêter Ollama et ne garder que OAAS + `llama-server` : dans Continue, mets la base URL sur `http://127.0.0.1:11435/v1` (ou le `server.bind` de ton YAML).
