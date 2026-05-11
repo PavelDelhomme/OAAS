@@ -42,7 +42,7 @@ Orchestrateur **local** pour faire tourner des LLM avec **llama.cpp** (`llama-se
 ## Fonctionnalités (rappel)
 
 - Lancement et arrêt propres de **llama-server** (profils YAML).
-- **Proxy** HTTP vers l’API OpenAI-like de llama-server.
+- **Proxy** HTTP vers l’API OpenAI-like de llama-server (requête en **flux** sauf chemin LLMLingua sur `POST /v1/chat/completions` ; réponses **gzip** côté OAAS quand le client l’accepte ; `text/event-stream` non compressé par défaut).
 - **Tableau de bord** **`/oaas/`** : profils, URL Continue, recommandations, catalogue, pont **Continue** (`/oaas/ide/*`), **métriques** (`/oaas/system.json`), synthèse poste (`/oaas/workstation.json`).
 - **`oaas status`** / **`make status`** : état du poste sans lire toute la doc.
 - **`oaas models pull`** : cache `XDG_DATA_HOME/oaas/models`.
@@ -90,6 +90,8 @@ Voir **`oaas models recommend`**.
 | `OAAS_PROFILE` | Profil YAML utilisé par `oaas serve` / `doctor` (défaut : `default`). |
 | `OAAS_MODELS_CATALOG` | Chemin absolu du catalogue modèles YAML. |
 | `OAAS_DOCS_CATALOG` | Chemin absolu du catalogue doc YAML. |
+| `OAAS_HTTP_READ_TIMEOUT_SECS` | Timeout **lecture** du client HTTP pour `models pull` / `docs pull` (défaut : `180`). Pas de timeout global sur la requête (`timeout` désactivé). |
+| `OAAS_PROXY_READ_TIMEOUT_SECS` | Timeout **lecture** du client HTTP du **proxy** vers llama-server (complétions longues, streaming ; défaut : `900`). |
 | `RUST_LOG` | Niveau de logs Rust (`debug`, `trace`, filtres par module…). |
 
 Après `make install`, le catalogue embarqué est lu depuis `../share/oaas/data/` relatif au binaire.

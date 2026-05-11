@@ -31,6 +31,7 @@ use axum::response::Response;
 use axum::routing::{any, get, post};
 use axum::Router;
 use clap::{Parser, Subcommand};
+use tower_http::compression::CompressionLayer;
 use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
 use url::Url;
@@ -45,7 +46,7 @@ use crate::error::OaasError;
 use crate::http_ide::{get_continue_status, post_apply_continue, post_open_folder};
 use crate::http_root::{oaas_catalog, oaas_status, oaas_system, oaas_ui, oaas_workstation, root};
 use crate::models_catalog::load_models_catalog;
-use crate::proxy::{build_client, forward_request, ProxyState};
+use crate::proxy::{build_proxy_client, forward_request, ProxyState};
 use crate::runtime::resolve_llama_binary;
 use crate::serve_dashboard::build_oaas_status;
 
@@ -180,7 +181,7 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
         (None, None)
     };
 
-    let client = build_client()?;
+    let client = build_proxy_client()?;
     let proxy = ProxyState {
         client,
         upstream: upstream_url,
@@ -210,6 +211,7 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
         .route("/oaas/workstation.json", get(oaas_workstation))
         .fallback(any(proxy_handler))
         .layer(axum::extract::DefaultBodyLimit::max(64 * 1024 * 1024))
+        .layer(CompressionLayer::new())
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind(&cfg.server.bind)

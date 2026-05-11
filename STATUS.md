@@ -21,7 +21,7 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 
 | Domaine | État | Détail |
 |--------|------|--------|
-| Proxy `/v1/*` | **OK** | Chat, models, streaming ; LLMLingua optionnel. |
+| Proxy `/v1/*` | **OK** | Chat, models, streaming ; LLMLingua optionnel ; requête **stream** (pas de `collect` global) sauf LLMLingua ; réponses **gzip** (`tower-http`) ; timeouts lecture proxy / pull configurables (`README`). |
 | Catalogue modèles + `pull` | **OK** | YAML + CLI + UI ; reprise téléchargement via `.part` + `Range`. |
 | Docs `oaas docs` | **Partiel** | git/fetch/devdocs-notes ; pas de RAG. |
 | UI `/oaas/` | **OK** | Statut, catalogue, IDE, système, navigation. |
@@ -55,9 +55,9 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 
 - **API Continue** = URL du **proxy OAAS** (`…/v1`), pas le port interne llama seul → LLMLingua reste dans la boucle.
 - **CPU par cœur** : deux lectures `/proc/stat` espacées de ~200 ms → pourcentage approximatif (suffisant pour un tableau de bord ; pas un profiler).
-- **Perf proxy / client** : corps requête en `Bytes` (moins de copies) ; `reqwest` avec **TCP keepalive** ; pas de changement de comportement API.
+- **Perf proxy / client** : chemin LLMLingua = corps en mémoire ; sinon flux Axum → reqwest ; réponse upstream en flux ; `reqwest` **TCP keepalive** + **read_timeout** (proxy vs téléchargements) ; compression **gzip** sortante sur le routeur Axum.
 - **Rôles des fichiers** : **STATUS** = vision + état ; **TODOS** = cases à cocher ; **BACKLOG** = détail, investigations, historique de livraison ; **README** = installation et commandes.
 
 ---
 
-*Dernière mise à jour : optimisations perf (snapshot CPU/GPU parallèle, proxy `Bytes`, keepalive HTTP client).*
+*Dernière mise à jour : compression gzip sortante, proxy streaming (zéro collect hors LLMLingua), clients HTTP proxy vs pull avec read timeouts distincts.*
