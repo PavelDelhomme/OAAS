@@ -19,6 +19,7 @@ Orchestrateur **local** pour faire tourner des LLM avec **llama.cpp** (`llama-se
 | **Port et liens sans deviner** | **`make status`** ou **`oaas status`** : affiche en premier les URL **UI** et **API `/v1`**, l’écoute YAML, et si le serveur répond. |
 | **Rôle « orchestrateur »** | OAAS démarre **llama-server**, expose le **proxy** `/v1/*` et sert l’**UI** `/oaas/*` — ce n’est pas un IDE : tu codes dans **Cursor / VS Code** avec **Continue** ; l’UI aide à configurer Continue et à ouvrir un dossier projet. |
 | **Projet / workspace** | Sur `/oaas/`, le champ **projet** pointe vers un répertoire : la fusion Continue vise alors **`<projet>/.continue/config.yaml`** (ou `.json`). |
+| **Serve qui plante sur LLMLingua** | `make doctor` puis **`make doctor-fix`** (désactive la compression dans le YAML), ou installe le venv : **`make llmlingua-venv`** + `pip install -r scripts/requirements-llmlingua.txt`. Avec **`prompt_compression.strict: false`**, `make serve` démarre quand même **sans** compression si le worker échoue. |
 
 ---
 

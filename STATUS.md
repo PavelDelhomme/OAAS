@@ -56,8 +56,9 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 - **API Continue** = URL du **proxy OAAS** (`…/v1`), pas le port interne llama seul → LLMLingua reste dans la boucle.
 - **CPU par cœur** : deux lectures `/proc/stat` espacées de ~200 ms → pourcentage approximatif (suffisant pour un tableau de bord ; pas un profiler).
 - **Perf proxy / client** : chemin LLMLingua = corps en mémoire ; sinon flux Axum → reqwest ; réponse upstream en flux ; `reqwest` **TCP keepalive** + **read_timeout** (proxy vs téléchargements) ; compression **gzip** sortante sur le routeur Axum.
+- **LLMLingua** : démarrage du worker **avant** llama-server ; `prompt_compression.strict: false` → `make serve` continue **sans** compression si le worker échoue ; `make doctor-fix` désactive `enabled` dans le YAML.
 - **Rôles des fichiers** : **STATUS** = vision + état ; **TODOS** = cases à cocher ; **BACKLOG** = détail, investigations, historique de livraison ; **README** = installation et commandes.
 
 ---
 
-*Dernière mise à jour : compression gzip sortante, proxy streaming (zéro collect hors LLMLingua), clients HTTP proxy vs pull avec read timeouts distincts.*
+*Dernière mise à jour : dépannage LLMLingua (serve, doctor, make help), `strict` / ordre de démarrage, exemple YAML sans compression par défaut.*

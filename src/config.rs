@@ -76,7 +76,7 @@ impl Default for PromptCompressionConfig {
             enabled: false,
             command: Vec::new(),
             timeout_secs: default_pc_timeout(),
-            strict: true,
+            strict: false,
             rate: default_pc_rate(),
             target_token: 0,
             model_name: default_pc_model(),

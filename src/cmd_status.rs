@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use clap::Args;
 
+use crate::doctor::LLMLINGUA_REMEDIATION_FR;
 use crate::error::OaasError;
 use crate::project_status::gather_workstation_status;
 
@@ -93,6 +94,9 @@ fn print_human(r: &crate::project_status::WorkstationStatus) {
             if r.llmlingua_ok { "✓" } else { "✗" },
             r.llmlingua_note.as_deref().unwrap_or("")
         );
+        if !r.llmlingua_ok {
+            println!("    → {}", LLMLINGUA_REMEDIATION_FR);
+        }
     } else {
         println!("  LLMLingua       : — (désactivé)");
     }

@@ -16,10 +16,12 @@ runtime:
   llama_server_binary: null
 
 # Compression automatique des prompts (LLMLingua) avant llama-server.
-# Prérequis : venv Python + pip install -r scripts/requirements-llmlingua.txt
-# puis adapte « command » (chemin absolu vers le worker et l’interpréteur du venv).
+# Par défaut désactivée : active « enabled: true » seulement après venv + deps (make llmlingua-venv).
+# Prérequis : pip install -r scripts/requirements-llmlingua.txt ; adapte « command » (python du venv + worker .py).
+# strict: true → make serve ÉCHOUE si le worker ne démarre pas (ex. ModuleNotFoundError: llmlingua).
+# strict: false → make serve démarre quand même SANS compression si le worker est KO.
 prompt_compression:
-  enabled: true
+  enabled: false
   command:
     - python3
     - "-u"
@@ -29,7 +31,7 @@ prompt_compression:
     # - "/chemin/absolu/vers/OAAS/scripts/oaas_llmlingua_worker.py"
     - "scripts/oaas_llmlingua_worker.py"
   timeout_secs: 300
-  strict: true
+  strict: false
   rate: 0.5
   target_token: 0
   model_name: "microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank"

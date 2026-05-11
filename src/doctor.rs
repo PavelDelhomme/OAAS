@@ -3,6 +3,9 @@ use std::path::PathBuf;
 use crate::config::{default_config_path, load_config, patch_prompt_compression_enabled};
 use crate::runtime::resolve_llama_binary;
 
+/// Rappel commun (serve, doctor, Makefile) quand LLMLingua est activé mais cassé.
+pub const LLMLINGUA_REMEDIATION_FR: &str = "make doctor-fix (désactive prompt_compression dans le YAML) | make llmlingua-venv + pip install -r scripts/requirements-llmlingua.txt | ou strict: false pour que make serve démarre sans compression si le worker échoue";
+
 fn llmlingua_import_ok(pc: &crate::config::PromptCompressionConfig) -> bool {
     if pc.command.is_empty() {
         return false;
@@ -93,9 +96,7 @@ pub fn run_doctor(config_path: Option<PathBuf>, profile: String, fix: bool) {
                     "✗ impossible d’importer llmlingua avec {:?} — pip install -r scripts/requirements-llmlingua.txt (voir README)",
                     pc.command[0]
                 );
-                println!(
-                    "  Astuce : make llmlingua-venv dans le dépôt, ou prompt_compression.enabled: false si tu n’utilises pas la compression."
-                );
+                println!("  → {}", LLMLINGUA_REMEDIATION_FR);
             }
         }
     } else {
@@ -140,7 +141,9 @@ pub fn run_doctor(config_path: Option<PathBuf>, profile: String, fix: bool) {
             );
         }
     } else if pc_broken {
-        println!("\n→ Correction automatique :   cargo run -- doctor --fix   ou   make doctor-fix");
+        println!("\n→ Correction automatique :   make doctor-fix   (ou cargo run -- doctor --fix)");
+        println!("  Autre option : dans le YAML, prompt_compression.strict: false puis make serve — démarrage sans compression si le worker est KO.");
+        println!("  ({})", LLMLINGUA_REMEDIATION_FR);
     }
 
     println!(

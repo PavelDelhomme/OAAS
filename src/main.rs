@@ -153,6 +153,40 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
         })?
         .clone();
 
+    let pc = cfg.prompt_compression.clone();
+    let (llmlingua, prompt_compression) = if pc.enabled {
+        if pc.command.is_empty() {
+            return Err(OaasError::Config(
+                "prompt_compression.enabled est true mais command est vide — remplis la liste (python + worker)".into(),
+            ));
+        }
+        match crate::llmlingua::LlmLinguaClient::spawn(&pc).await {
+            Ok(client_ling) => {
+                info!(
+                    model = %pc.model_name,
+                    llmlingua2 = pc.use_llmlingua2,
+                    "worker LLMLingua prêt (compression des prompts activée)"
+                );
+                (Some(client_ling), Some(pc))
+            }
+            Err(e) => {
+                if pc.strict {
+                    return Err(OaasError::Backend(format!(
+                        "LLMLingua : impossible de démarrer le worker — {e}\n  → {}",
+                        crate::doctor::LLMLINGUA_REMEDIATION_FR
+                    )));
+                }
+                warn!(
+                    error = %e,
+                    "LLMLingua désactivé pour cette session (prompt_compression.strict=false) — le proxy tourne sans compression. Corrige Python ou lance make doctor-fix."
+                );
+                (None, None)
+            }
+        }
+    } else {
+        (None, None)
+    };
+
     let llama_bin = resolve_llama_binary(&cfg.runtime.llama_server_binary)?;
     let backend = LlamaBackend::spawn(&llama_bin, &profile).await?;
     let llama_pid = backend.llama_pid();
@@ -162,24 +196,6 @@ async fn run_serve(config_path: Option<PathBuf>, profile_name: String) -> Result
 
     let upstream_url = Url::parse(&upstream_base)
         .map_err(|e| OaasError::Config(format!("URL interne invalide: {e}")))?;
-
-    let pc = cfg.prompt_compression.clone();
-    let (llmlingua, prompt_compression) = if pc.enabled {
-        if pc.command.is_empty() {
-            return Err(OaasError::Config(
-                "prompt_compression.enabled est true mais command est vide — remplis la liste (python + worker)".into(),
-            ));
-        }
-        let client_ling = crate::llmlingua::LlmLinguaClient::spawn(&pc).await?;
-        info!(
-            model = %pc.model_name,
-            llmlingua2 = pc.use_llmlingua2,
-            "worker LLMLingua prêt (compression des prompts activée)"
-        );
-        (Some(client_ling), Some(pc))
-    } else {
-        (None, None)
-    };
 
     let client = build_proxy_client()?;
     let proxy = ProxyState {
