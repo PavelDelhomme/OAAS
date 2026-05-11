@@ -73,6 +73,6 @@ Pour une **checklist courte** au quotidien, voir **[TODOS.md](TODOS.md)**.
 
 | Période | Livré |
 |---------|--------|
-| Récent | Continue **workspace** (`?workspace=`, POST, UI), `scripts/oaas.service.example`, `make stop` / `doctor --fix` / `models-*`, tests `cargo test`, doc. |
+| Récent | Perf : `system.json` CPU∥GPU, proxy `Bytes`, `reqwest` TCP keepalive ; Continue workspace ; `models pull` `.part` ; doc. |
 
 *(Détail produit « état par domaine » : toujours dans STATUS.md.)*

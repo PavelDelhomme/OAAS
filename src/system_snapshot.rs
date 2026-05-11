@@ -66,9 +66,14 @@ async fn collect_linux(llama_pid: Option<u32>) -> SystemSnapshot {
     let (mem_total_mb, mem_available_mb) = read_meminfo();
     let oaas_rss_mib = proc_status_rss_kb(std::process::id()).map(kb_to_mib);
     let llama_rss_mib = llama_pid.and_then(|p| proc_status_rss_kb(p).map(kb_to_mib));
-    let cpu_cores = sample_cpu_per_core().await;
-    let mut gpus = query_nvidia_gpus().await;
-    gpus.extend(query_amd_rocm_gpus().await);
+    // CPU (~200 ms d’échantillonnage) et GPU (sous-processus + timeouts) en parallèle pour limiter la latence de `/oaas/system.json`.
+    let (cpu_cores, (mut gpus, amd_gpus)) = tokio::join!(
+        sample_cpu_per_core(),
+        async {
+            tokio::join!(query_nvidia_gpus(), query_amd_rocm_gpus())
+        }
+    );
+    gpus.extend(amd_gpus);
 
     SystemSnapshot {
         platform: "linux".into(),
@@ -123,6 +128,9 @@ fn read_meminfo() -> (Option<u64>, Option<u64>) {
                 .strip_suffix(" kB")
                 .and_then(|x| x.parse::<u64>().ok())
                 .map(|kb| kb / 1024);
+        }
+        if total.is_some() && avail.is_some() {
+            break;
         }
     }
     (total, avail)

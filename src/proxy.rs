@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use axum::body::Body;
+use bytes::Bytes;
 use axum::http::{header, HeaderName, HeaderValue, Method, Request, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
@@ -42,7 +43,7 @@ async fn forward_inner(state: &ProxyState, req: Request<Body>) -> Result<Respons
         .collect()
         .await
         .map_err(|e| OaasError::Backend(format!("corps de requête invalide: {e}")))?;
-    let mut body_bytes = collected.to_bytes().to_vec();
+    let mut body_data: Bytes = collected.to_bytes();
 
     let path = parts.uri.path();
     let query = parts
@@ -53,14 +54,14 @@ async fn forward_inner(state: &ProxyState, req: Request<Body>) -> Result<Respons
 
     if parts.method == Method::POST && path == "/v1/chat/completions" {
         if let (Some(ref ling), Some(ref pcfg)) = (&state.llmlingua, &state.prompt_compression) {
-            if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&body_bytes) {
+            if let Ok(val) = serde_json::from_slice::<serde_json::Value>(body_data.as_ref()) {
                 match ling.compress_chat_json(pcfg, &val).await {
                     Ok(out) => {
-                        body_bytes = serde_json::to_vec(&out).map_err(|e| {
+                        body_data = Bytes::from(serde_json::to_vec(&out).map_err(|e| {
                             OaasError::Backend(format!(
                                 "sérialisation du corps après LLMLingua: {e}"
                             ))
-                        })?;
+                        })?);
                     }
                     Err(e) => {
                         if pcfg.strict {
@@ -82,7 +83,7 @@ async fn forward_inner(state: &ProxyState, req: Request<Body>) -> Result<Respons
     let mut rb = state
         .client
         .request(parts.method, url.as_str())
-        .body(body_bytes);
+        .body(body_data);
 
     for (k, v) in parts.headers.iter() {
         if HOP_HEADERS.contains(k) {
@@ -125,6 +126,8 @@ pub fn build_client() -> Result<reqwest::Client, OaasError> {
     reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(10))
         .pool_idle_timeout(Duration::from_secs(90))
+        // Connexions vers llama-server / HF : évite de retomber sur un TCP mort après inactivité.
+        .tcp_keepalive(Duration::from_secs(60))
         .build()
         .map_err(|e| OaasError::Backend(e.to_string()))
 }

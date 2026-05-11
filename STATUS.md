@@ -27,7 +27,7 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 | UI `/oaas/` | **OK** | Statut, catalogue, IDE, système, navigation. |
 | `oaas status` / `make status` | **OK** | Config, GGUF, TCP, HTTP `/oaas/`, Continue, binaire courant ; `--ci` = fmt+clippy+build. |
 | `GET /oaas/workstation.json` | **OK** | Même synthèse pendant `serve` (profil actif du serveur). |
-| Métriques `/oaas/system.json` | **OK (Linux)** | Charge, RAM, RSS, **CPU par cœur**, `nvidia-smi`, `rocm-smi --json`. |
+| Métriques `/oaas/system.json` | **OK (Linux)** | Charge, RAM, RSS, **CPU par cœur**, `nvidia-smi`, `rocm-smi --json` ; **CPU + GPU en parallèle** pour limiter la latence. |
 | Continue YAML | **OK** | Fusion + backup + détection bloc OAAS. |
 | Continue JSON (ancien) | **OK** | Si seul `config.json` ou YAML absent ; fusion + backup. |
 | Continue **workspace** | **OK** | `GET /oaas/ide/continue-status?workspace=…` + POST `workspace` ; UI : champ **projet** → `<projet>/.continue/…`. |
@@ -55,8 +55,9 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 
 - **API Continue** = URL du **proxy OAAS** (`…/v1`), pas le port interne llama seul → LLMLingua reste dans la boucle.
 - **CPU par cœur** : deux lectures `/proc/stat` espacées de ~200 ms → pourcentage approximatif (suffisant pour un tableau de bord ; pas un profiler).
+- **Perf proxy / client** : corps requête en `Bytes` (moins de copies) ; `reqwest` avec **TCP keepalive** ; pas de changement de comportement API.
 - **Rôles des fichiers** : **STATUS** = vision + état ; **TODOS** = cases à cocher ; **BACKLOG** = détail, investigations, historique de livraison ; **README** = installation et commandes.
 
 ---
 
-*Dernière mise à jour : entrée **MemePalace** (palais de la mémoire) dans vision + tableau ; détail [BACKLOG.md](BACKLOG.md).*
+*Dernière mise à jour : optimisations perf (snapshot CPU/GPU parallèle, proxy `Bytes`, keepalive HTTP client).*

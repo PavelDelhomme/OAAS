@@ -41,3 +41,4 @@ Liste **actionnable** au jour le jour. Le détail et les investigations : **[BAC
 - [ ] RAG + index doc (moyen terme).
 - [x] Exemple `oaas.service` + doc systemd (`scripts/oaas.service.example`).
 - [x] `models pull` : reprise sur fichier `.part` (HTTP `Range`).
+- [x] Perf prudente : `/oaas/system.json` (CPU ∥ NVIDIA ∥ ROCm), proxy `Bytes`, client HTTP keepalive (voir STATUS).

@@ -127,6 +127,7 @@ Instructions détaillées en tête du fichier `.example`.
 - **UI** : section « Système » (rafraîchissement périodique + bouton manuel).
 - **CLI / JSON** : `oaas status --json` pour scripts ; `rocm-smi` absent → section AMD vide (normal sur machine sans ROCm).
 - **Précision** : les pourcentages CPU cœur sont une **approximation** courte fenêtre ; pour du profiling fin utiliser `perf`, `bpftrace`, etc.
+- **Latence** : le JSON système calcule CPU et GPU en **parallèle** ; le proxy réutilise un client HTTP avec **keepalive** (moins de reconnexions vers llama-server après pause).
 
 ## LLMLingua
 
