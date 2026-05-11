@@ -25,7 +25,7 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 | Catalogue modèles + `pull` | **OK** | YAML + CLI + UI ; reprise téléchargement via `.part` + `Range`. |
 | Docs `oaas docs` | **Partiel** | git/fetch/devdocs-notes ; pas de RAG. |
 | UI `/oaas/` | **OK** | Statut, catalogue, IDE, système, navigation. |
-| `oaas status` / `make status` | **OK** | Config, GGUF, TCP, HTTP `/oaas/`, Continue, binaire courant ; `--ci` = fmt+clippy+build. |
+| `oaas status` / `make status` | **OK** | En-tête avec **URL UI** + **API /v1** (depuis YAML) ; TCP, GET `/oaas/`, Continue, binaire ; `--ci` = fmt+clippy+build. |
 | `GET /oaas/workstation.json` | **OK** | Même synthèse pendant `serve` (profil actif du serveur). |
 | Métriques `/oaas/system.json` | **OK (Linux)** | Charge, RAM, RSS, **CPU par cœur**, `nvidia-smi`, `rocm-smi --json` ; **CPU + GPU en parallèle** pour limiter la latence. |
 | Continue YAML | **OK** | Fusion + backup + détection bloc OAAS. |

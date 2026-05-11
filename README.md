@@ -10,6 +10,18 @@ Orchestrateur **local** pour faire tourner des LLM avec **llama.cpp** (`llama-se
 
 ---
 
+## Démarrage rapide : lancer le projet et ouvrir l’interface
+
+| Objectif | Où / quoi |
+|----------|-----------|
+| **Lancer tout** (llama + proxy + UI) | Dans le clone du dépôt : `make serve` — arrêt : `Ctrl+C` dans ce terminal. Avec le binaire installé : `oaas serve`. |
+| **Adresse de l’UI** | Par défaut : **`http://127.0.0.1:11435/oaas/`** — c’est le **tableau de bord** (profils, catalogue, pont Continue, métriques). Si tu as changé `server.bind` dans `~/.config/oaas/config.yaml`, remplace hôte/port. |
+| **Port et liens sans deviner** | **`make status`** ou **`oaas status`** : affiche en premier les URL **UI** et **API `/v1`**, l’écoute YAML, et si le serveur répond. |
+| **Rôle « orchestrateur »** | OAAS démarre **llama-server**, expose le **proxy** `/v1/*` et sert l’**UI** `/oaas/*` — ce n’est pas un IDE : tu codes dans **Cursor / VS Code** avec **Continue** ; l’UI aide à configurer Continue et à ouvrir un dossier projet. |
+| **Projet / workspace** | Sur `/oaas/`, le champ **projet** pointe vers un répertoire : la fusion Continue vise alors **`<projet>/.continue/config.yaml`** (ou `.json`). |
+
+---
+
 ## Que faire, dans quel ordre ?
 
 | Étape | Commande | Rôle |

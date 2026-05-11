@@ -28,6 +28,10 @@ pub struct WorkstationStatus {
     pub llmlingua_ok: bool,
     pub llmlingua_note: Option<String>,
     pub oaas_bind: Option<String>,
+    /// Ex. `http://127.0.0.1:11435` (hôte « client » si `bind` = `0.0.0.0` / `[::]`).
+    pub http_base_url: Option<String>,
+    pub oaas_ui_url: Option<String>,
+    pub api_base_url: Option<String>,
     pub tcp_listen_open: bool,
     pub http_oaas_ui_ok: bool,
     pub http_note: Option<String>,
@@ -78,6 +82,9 @@ pub async fn gather_workstation_status(
     let mut llmlingua_ok = false;
     let mut llmlingua_note = None::<String>;
     let mut oaas_bind = None::<String>;
+    let mut http_base_url = None::<String>;
+    let mut oaas_ui_url = None::<String>;
+    let mut api_base_url = None::<String>;
     let mut tcp_listen_open = false;
     let mut http_oaas_ui_ok = false;
     let mut http_note = None::<String>;
@@ -150,6 +157,10 @@ pub async fn gather_workstation_status(
 
             oaas_bind = Some(cfg.server.bind.clone());
             let host = client_facing_host(&cfg.server.bind);
+            let base = format!("http://{host}");
+            http_base_url = Some(base.clone());
+            oaas_ui_url = Some(format!("{base}/oaas/"));
+            api_base_url = Some(format!("{base}/v1"));
             tcp_listen_open = host
                 .parse::<std::net::SocketAddr>()
                 .ok()
@@ -159,7 +170,6 @@ pub async fn gather_workstation_status(
                 .unwrap_or(false);
 
             if tcp_listen_open {
-                let base = format!("http://{host}");
                 match reqwest::Client::builder()
                     .timeout(Duration::from_secs(2))
                     .build()
@@ -245,6 +255,9 @@ pub async fn gather_workstation_status(
         llmlingua_ok,
         llmlingua_note,
         oaas_bind,
+        http_base_url,
+        oaas_ui_url,
+        api_base_url,
         tcp_listen_open,
         http_oaas_ui_ok,
         http_note,

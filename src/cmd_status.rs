@@ -35,6 +35,31 @@ pub async fn run_status(args: StatusCli) -> Result<(), OaasError> {
 
 fn print_human(r: &crate::project_status::WorkstationStatus) {
     println!("OAAS — statut poste de travail\n");
+
+    if let (Some(ui), Some(api)) = (r.oaas_ui_url.as_deref(), r.api_base_url.as_deref()) {
+        println!("  ▶ Où est l’interface ?");
+        println!("     Tableau de bord (UI web) : {ui}");
+        println!("     API OpenAI-like          : {api}   (Continue, clients /v1)");
+        if let Some(ref bind) = r.oaas_bind {
+            println!(
+                "     Écoute (server.bind)     : {bind}   → lancer : make serve  ou  oaas serve"
+            );
+        }
+        println!(
+            "     Rappel : pas d’éditeur intégré ici — l’UI configure Continue et le proxy ; tu codes dans Cursor/VS Code + extension Continue."
+        );
+        println!();
+    } else if !r.config_present {
+        println!(
+            "  ▶ Pas d’URL tant que la config n’existe pas →  make init-config  puis  make serve\n"
+        );
+    } else if !r.config_parse_ok {
+        println!(
+            "  ▶ Corrige le YAML {} pour afficher les URL (server.bind, etc.).\n",
+            r.config_path
+        );
+    }
+
     println!(
         "  Config YAML     : {} {}",
         r.config_path,
@@ -76,14 +101,18 @@ fn print_human(r: &crate::project_status::WorkstationStatus) {
         println!(
             "  Port OAAS (TCP) : {}",
             if r.tcp_listen_open {
-                "✓ (serveur actif ou autre chose écoute)"
+                "✓ (processus qui écoute — souvent OAAS après make serve)"
             } else {
                 "✗ (rien n’écoute — lance « oaas serve » ou « make serve »)"
             }
         );
         println!(
-            "  UI /oaas/ (HTTP): {}",
-            if r.http_oaas_ui_ok { "✓" } else { "✗" }
+            "  GET /oaas/      : {}",
+            if r.http_oaas_ui_ok {
+                "✓ (UI répond)"
+            } else {
+                "✗"
+            }
         );
         if let Some(ref n) = r.http_note {
             println!("    → {n}");

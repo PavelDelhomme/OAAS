@@ -32,7 +32,7 @@ help:
 	@echo "  make doctor          → vérifie llama-server, YAML, fichier .gguf"
 	@echo "  make doctor-fix      → doctor --fix : désactive LLMLingua dans le YAML si import / script / commande cassés"
 	@echo "  make doctor-fix-issues → alias de doctor-fix"
-	@echo "  make status          → oaas status (config, GGUF, port, Continue, …)"
+	@echo "  make status          → URL UI + API /v1, port, config, Continue (cargo run -- status)"
 	@echo "  make status-ci       → idem + cargo fmt --check, clippy, build (lent)"
 	@echo ""
 	@echo "■ Lancer le serveur (proxy + UI web + llama-server)"
@@ -87,6 +87,7 @@ run:
 serve:
 	@echo "Démarrage OAAS — arrêt : Ctrl+C dans ce terminal, ou depuis un autre : make stop"
 	@echo "  UI : http://127.0.0.1:11435/oaas/  (adapte à server.bind dans ~/.config/oaas/config.yaml)"
+	@echo "  Autre terminal : make status  → mêmes URL lues depuis ton YAML + test HTTP"
 	@echo "  JSON : /oaas/status.json  /oaas/system.json  /oaas/catalog.json"
 	$(CARGO) run -- serve
 
