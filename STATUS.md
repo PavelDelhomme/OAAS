@@ -13,6 +13,7 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 4. **Continue / IDE** : fusion **YAML ou JSON**, sauvegarde avant écriture, ouverture projet dans `code` / `cursor` / `codium`.
 5. **Observabilité** : RAM / charge / **CPU par cœur** / **NVIDIA** + **AMD ROCm** (quand outils présents), RSS OAAS + llama.
 6. **Suite** (pas encore livré) : index local + **RAG** sur cache doc, miroirs téléchargement, alignement versions outils (`go version`, etc.).
+7. **MemePalace** (voir [BACKLOG.md](BACKLOG.md)) : exploiter la **technique du palais de la mémoire** (*method of loci* / méthode des lieux) comme axe produit — structuration mentale des infos, possible lien avec RAG, docs ou parcours dans l’UI ; **pas encore implémenté** dans le code.
 
 ---
 
@@ -32,6 +33,7 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 | Continue **workspace** | **OK** | `GET /oaas/ide/continue-status?workspace=…` + POST `workspace` ; UI : champ **projet** → `<projet>/.continue/…`. |
 | ROCm parsing | **Partiel** | Dépend des clés JSON de ta version ROCm ; ajuster si besoin. |
 | RAG / embeddings | **Absent** | Prévu. |
+| **MemePalace** (palais de la mémoire) | **Absent** | Idée notée : lier *méthode des lieux* à organisation doc / RAG / UX ; cadrage dans [BACKLOG.md](BACKLOG.md) — aucun module OAAS aujourd’hui. |
 | Service systemd | **Partiel** | Exemple `scripts/oaas.service.example` (user unit) + README ; pas d’unité imposée par le dépôt. |
 
 ---
@@ -57,4 +59,4 @@ Document **vivant** : **vision** et **état des fonctionnalités** (tableau ci�
 
 ---
 
-*Dernière mise à jour : `models pull` reprise via `.part` + en-tête HTTP `Range`.*
+*Dernière mise à jour : entrée **MemePalace** (palais de la mémoire) dans vision + tableau ; détail [BACKLOG.md](BACKLOG.md).*

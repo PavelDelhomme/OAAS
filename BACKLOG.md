@@ -53,6 +53,22 @@ Pour une **checklist courte** au quotidien, voir **[TODOS.md](TODOS.md)**.
 
 ---
 
+## MemePalace — technique du palais de la mémoire (*method of loci*)
+
+**Nom projet :** *MemePalace* (jeu de mots possible avec *memory palace* / *meme* selon ta direction produit).
+
+**Référence cognitive :** la **méthode des lieux** consiste à ancrer des informations dans un parcours spatial imaginaire (ou réel) pour faciliter mémorisation et rappel — souvent utilisée pour l’apprentissage dense.
+
+**Lien possible avec OAAS (à cadrer) :**
+
+- Structurer le **cache doc** ou les **réponses RAG** selon des « pièces » / parcours plutôt qu’une liste plate.
+- **Prompts système** ou gabarits Continue qui guident l’utilisateur à placer des concepts sur un chemin mental.
+- **UI `/oaas/`** : visualisation ou assistant pas à pas (hors scope technique immédiat).
+
+**État actuel :** **aucune implémentation** dans le dépôt ; uniquement **suivi documentaire** (STATUS, ce fichier, TODOS). Prochaine étape : mini-spec (objectif utilisateur, hors / dans le LLM, dépendance RAG).
+
+---
+
 ## Récemment fait (mémo courte)
 
 | Période | Livré |

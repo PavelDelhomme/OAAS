@@ -6,7 +6,7 @@ Orchestrateur **local** pour faire tourner des LLM avec **llama.cpp** (`llama-se
 
 **Ce projet ne dépend pas d’Ollama.** Tu peux arrêter Ollama et ne garder que OAAS + `llama-server` : dans Continue, mets la base URL sur `http://127.0.0.1:11435/v1` (ou le `server.bind` de ton YAML).
 
-**Suivi projet** : **[STATUS.md](STATUS.md)** (vision + état des features) · **[TODOS.md](TODOS.md)** (checklist) · **[BACKLOG.md](BACKLOG.md)** (backlog détaillé, ex. Ollama qui redémarre seul). Après `make install-user`, des copies peuvent être sous `~/.local/share/oaas/` pour STATUS (selon install).
+**Suivi projet** : **[STATUS.md](STATUS.md)** (vision + état des features) · **[TODOS.md](TODOS.md)** (checklist) · **[BACKLOG.md](BACKLOG.md)** (backlog détaillé, ex. Ollama, **MemePalace** / palais de la mémoire). Après `make install-user`, des copies peuvent être sous `~/.local/share/oaas/` pour STATUS (selon install).
 
 ---
 

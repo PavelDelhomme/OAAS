@@ -4,6 +4,16 @@ Liste **actionnable** au jour le jour. Le détail et les investigations : **[BAC
 
 ---
 
+## MemePalace (palais de la mémoire)
+
+- [ ] Lire le cadrage dans [BACKLOG.md](BACKLOG.md) section *MemePalace*.
+- [ ] Décider du périmètre v1 : purement documentaire / prompts / RAG / UI.
+- [ ] Rédiger une mini-spec (1 page) quand tu attaques le sujet.
+
+**État :** pas de code OAAS dédié ; idée tracée dans STATUS + BACKLOG.
+
+---
+
 ## Poste de travail / conflit ressources
 
 - [ ] Comprendre pourquoi **Ollama** redémarre seul : suivre la section *Ollama qui se lance tout seul* dans [BACKLOG.md](BACKLOG.md) (systemd user, autostart, etc.).
